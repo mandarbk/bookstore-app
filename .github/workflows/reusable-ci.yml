@@ -11,8 +11,8 @@ on:
       DOCKER_PASSWORD: { required: true }
 
 env:
-  DOCKER_REGISTRY: my-registry.com # Update with your registry
-  IMAGE_NAME: my-microservice-app
+  DOCKER_REGISTRY: registry.docker.com # Update with your registry
+  IMAGE_NAME:  ${{ inputs.service-name }}
 
 jobs:
   build-and-test:
@@ -57,15 +57,15 @@ jobs:
           # Tags the image with the git commit hash for traceability
           tags: ${{ env.DOCKER_REGISTRY }}/${{ inputs.service-name }}:${{ github.sha }}
 
-  update-manifest:
-    needs: docker-build-push
-    runs-on: ubuntu-latest
-    steps:
-      - name: Update Manifest Repo
-        run: |
-          git clone --depth 1 https://x-access-token:${{ secrets.GIT_PAT }}@github.com/my-org/manifest-repo.git
-          cd manifest-repo/environments/${{ github.ref_name }}/${{ inputs.service-name }}
-          yq -i '.image.tag = "${{ github.sha }}"' values.yaml
-          git config user.name "CI-Bot"
-          git commit -am "Update ${{ inputs.service-name }} to ${{ github.sha }}"
-          git push
+#  update-manifest:
+#    needs: docker-build-push
+#    runs-on: ubuntu-latest
+#    steps:
+#      - name: Update Manifest Repo
+#        run: |
+#          git clone --depth 1 https://x-access-token:${{ secrets.GIT_PAT }}@github.com/my-org/manifest-repo.git
+#          cd manifest-repo/environments/${{ github.ref_name }}/${{ inputs.service-name }}
+#          yq -i '.image.tag = "${{ github.sha }}"' values.yaml
+#          git config user.name "CI-Bot"
+#          git commit -am "Update ${{ inputs.service-name }} to ${{ github.sha }}"
+#          git push
