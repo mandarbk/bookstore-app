@@ -71,7 +71,7 @@ public class OrderController {
     @PutMapping("/{id}")
     @PreAuthorize("hasAnyAuthority('SCOPE_write:orders')")
     public ResponseEntity<Order> updateOrder(@PathVariable Long id, @RequestBody Order orderUpdates) {
-        log.info("PUT /api/orders/{} - Updating order", id);
+        log.info("PUT /api/orders/{} - Updating order status", orderUpdates.getStatus());
         try {
             return ResponseEntity.ok(orderService.updateOrder(id, orderUpdates));
         } catch (RuntimeException e) {
