@@ -57,7 +57,7 @@ jobs:
         uses: docker/build-push-action@v6
         with:
           context: ${{ inputs.context-path }}
-          file: ./Dockerfile # Path to your multi-stage Dockerfile
+          file: ${{ inputs.context-path }}/Dockerfile
           push: true
           # Tags the image with the git commit hash for traceability
           #tags: ${{ env.DOCKER_REGISTRY }}/${{ inputs.service-name }}:${{ github.sha }}
