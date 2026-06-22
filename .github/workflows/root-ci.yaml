@@ -74,7 +74,7 @@ jobs:
               - 'config-server/**'
               - '.github/workflows/ci.yml'
               - '.github/workflows/reusable-ci.yml'
-            eureka-server: 
+            bookstore-eureka-server: 
               - 'bookstore-eureka-server/**'
               - '.github/workflows/ci.yml'
               - '.github/workflows/reusable-ci.yml'
