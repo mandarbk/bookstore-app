@@ -48,7 +48,7 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v6
         with:
-          fetch-depth: 3
+          fetch-depth: 2
       - uses: dorny/paths-filter@v4
         id: filter
         with:
@@ -79,33 +79,41 @@ jobs:
               - '.github/workflows/ci.yml'
               - '.github/workflows/reusable-ci.yml'
 
-  build:
-    needs: changes
-    # ADD THIS BLOCK TO YOUR ROOT WORKFLOW
-    permissions:
-      contents: read
-      packages: write  # <--- Authorizes the root job to pass write scopes downstream
-    # Comment this out temporarily so the job runs even if the filter returns empty
-    # if: ${{ needs.changes.outputs.services != '[]' }}
-    strategy:
-      matrix:
-        # Explicitly hardcode the services for this run
-        service: [order-api, auth-server, api-gateway, book-api, config-server, bookstore-eureka-server]
-    uses: ./.github/workflows/reusable-ci.yml
-    with:
-      service-name: ${{ matrix.service }}
-      context-path: './${{ matrix.service }}'
-    secrets: inherit
-
-  # This job triggers the build for ONLY the services that changed
 #  build:
 #    needs: changes
-#    #if: ${{ needs.changes.outputs.services != '[]' }}
+#    # ADD THIS BLOCK TO YOUR ROOT WORKFLOW
+#    permissions:
+#      contents: read
+#      packages: write  # <--- Authorizes the root job to pass write scopes downstream
+#    # Comment this out temporarily so the job runs even if the filter returns empty
+#    # if: ${{ needs.changes.outputs.services != '[]' }}
 #    strategy:
 #      matrix:
-#        service: ${{ fromJson(needs.changes.outputs.services) }}
+#        # Explicitly hardcode the services for this run
+#        service: [order-api, auth-server, api-gateway, book-api, config-server, bookstore-eureka-server]
 #    uses: ./.github/workflows/reusable-ci.yml
 #    with:
 #      service-name: ${{ matrix.service }}
 #      context-path: './${{ matrix.service }}'
 #    secrets: inherit
+
+  # This job triggers the build for ONLY the services that changed
+build:
+  needs: changes
+  # Only run if the changes job actually detected service modifications
+  if: ${{ needs.changes.outputs.services != '[]' && needs.changes.outputs.services != '' }}
+
+  strategy:
+    matrix:
+      # Dynamically parse the list of altered services from the filter output
+      service: ${{ fromJson(needs.changes.outputs.services) }}
+
+  permissions:
+    contents: read
+    packages: write
+
+  uses: ./.github/workflows/reusable-ci.yml
+  with:
+    service-name: ${{ matrix.service }}
+    context-path: './${{ matrix.service }}'
+  secrets: inherit

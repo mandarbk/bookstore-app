@@ -12,7 +12,6 @@ on:
 
 env:
   DOCKER_REGISTRY: ghcr.io # Update with your registry
-  #IMAGE_NAME:  ${{ inputs.service-name }}
   IMAGE_NAME: ${{ github.repository_owner }}/${{ inputs.service-name }}
 
 jobs:
