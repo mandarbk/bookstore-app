@@ -79,15 +79,29 @@ jobs:
               - '.github/workflows/ci.yml'
               - '.github/workflows/reusable-ci.yml'
 
-  # This job triggers the build for ONLY the services that changed
   build:
     needs: changes
-    if: ${{ needs.changes.outputs.services != '[]' }}
+    # Comment this out temporarily so the job runs even if the filter returns empty
+    # if: ${{ needs.changes.outputs.services != '[]' }}
     strategy:
       matrix:
-        service: ${{ fromJson(needs.changes.outputs.services) }}
+        # Explicitly hardcode the services for this run
+        service: [order-api, auth-server, api-gateway, book-api, config-server, bookstore-eureka-server]
     uses: ./.github/workflows/reusable-ci.yml
     with:
       service-name: ${{ matrix.service }}
       context-path: './${{ matrix.service }}'
     secrets: inherit
+
+  # This job triggers the build for ONLY the services that changed
+#  build:
+#    needs: changes
+#    #if: ${{ needs.changes.outputs.services != '[]' }}
+#    strategy:
+#      matrix:
+#        service: ${{ fromJson(needs.changes.outputs.services) }}
+#    uses: ./.github/workflows/reusable-ci.yml
+#    with:
+#      service-name: ${{ matrix.service }}
+#      context-path: './${{ matrix.service }}'
+#    secrets: inherit
