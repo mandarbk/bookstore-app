@@ -1,0 +1,45 @@
+# --- Maven ---
+target/
+pom.xml.tag
+pom.xml.releaseBackup
+pom.xml.next
+pom.xml.versionsBackup
+release.properties
+dependency-reduced-pom.xml
+buildNumber.properties
+.mvn/timing.properties
+.mvn/wrapper/maven-wrapper.jar
+
+# --- Compiled Java Class files ---
+*.class
+*.log
+*.ctxt
+*.jar
+*.war
+*.nar
+*.ear
+*.zip
+*.tar.gz
+*.rar
+
+# --- IntelliJ IDEA ---
+.idea/
+*.iws
+*.iml
+*.ipr
+out/
+!**/src/main/resources/archetype-resources/src/main/resources/.idea/
+
+# --- Eclipse ---
+.metadata
+.classpath
+.project
+.settings/
+.factorypath
+
+# --- Visual Studio Code ---
+.vscode/
+
+# --- Operating System Files ---
+.DS_Store
+Thumbs.db
