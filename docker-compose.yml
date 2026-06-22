@@ -63,7 +63,7 @@ services:
     healthcheck:
       test: ["CMD-SHELL", "wget -qO- http://localhost:8761/actuator/health | grep -q 'UP' || exit 1"]
       interval: 5s
-      timeout: 3s
+      timeout: 5s
       retries: 5
 
   auth-server:
@@ -96,7 +96,6 @@ services:
       mysql-replica:
         condition: service_healthy
 
-
   books-service:
     image: books-service:latest
     build:
@@ -117,7 +116,7 @@ services:
       - bookstore-network
     healthcheck:
       # Queries the readiness probe; -q silences logs, -O - redirects output to stdout
-      test: ["CMD", "wget", "-no-check-certificate", "-q", "-O", "-", "http://localhost:8081/actuator/health/readiness"]
+      test: [ "CMD-SHELL", "wget -qO- http://localhost:8081/actuator/health/readiness | grep -q 'UP' || exit 1" ]
       interval: 10s     # How often to check health
       timeout: 5s       # How long to wait for a response before failing
       retries: 3       # Number of consecutive failures before marking 'unhealthy'
@@ -150,7 +149,7 @@ services:
       - bookstore-network
     healthcheck:
       # Queries the readiness probe; -q silences logs, -O - redirects output to stdout
-      test: ["CMD", "wget", "-no-check-certificate", "-q", "-O", "-", "http://localhost:8085/actuator/health/readiness"]
+      test: [ "CMD-SHELL", "wget -qO- http://localhost:8085/actuator/health/readiness | grep -q 'UP' || exit 1" ]
       interval: 10s     # How often to check health
       timeout: 5s       # How long to wait for a response before failing
       retries: 3       # Number of consecutive failures before marking 'unhealthy'
@@ -183,7 +182,7 @@ services:
       - bookstore-network
     healthcheck:
       # Queries the readiness probe; -q silences logs, -O - redirects output to stdout
-      test: ["CMD", "wget", "-no-check-certificate", "-q", "-O", "-", "http://localhost:8091/actuator/health/readiness"]
+      test: [ "CMD-SHELL", "wget -qO- http://localhost:8091/actuator/health/readiness | grep -q 'UP' || exit 1" ]
       interval: 10s     # How often to check health
       timeout: 5s       # How long to wait for a response before failing
       retries: 3       # Number of consecutive failures before marking 'unhealthy'
@@ -262,6 +261,7 @@ services:
       SPRING_CLOUD_CONFIG_CLIENT_ENABLED: "false"
       SPRING_CLOUD_CONFIG_URI: ""
       SPRING_CONFIG_IMPORT: "optional:configserver:"
+      CONFIG_SERVER_HOST: git-server
       
       # # JAVA_OPTS: "-Dspring.cloud.config.client.enabled=false"
       # GIT_SSH_COMMAND: "ssh -o StrictHostKeyChecking=no"

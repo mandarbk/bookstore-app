@@ -28,14 +28,21 @@
 #    # uses: ./.github/workflows/reusable-ci.yml:
 #           This is where we call the "Template" we built earlier. We simply pass the service name into the template.
 #
-
 name: Bookstore Application
 run-name: Pipeline run by @${{ github.actor }}
 
 on:
   push:
     branches: [ main ]
+  pull_request:
+    branches: [ main ]
   workflow_dispatch:
+    inputs:
+      force-build-all:
+        description: 'Force compilation and deployment of ALL microservices'
+        type: boolean
+        default: false
+        required: true
 
 
 jobs:
@@ -44,11 +51,12 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       services: ${{ steps.filter.outputs.changes }}
+      force_all: ${{ github.event.inputs.force-build-all || 'false' }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v6
         with:
-          fetch-depth: 3
+          fetch-depth: 2
       - uses: dorny/paths-filter@v4
         id: filter
         with:
@@ -56,52 +64,56 @@ jobs:
           filters: |
             order-api: 
               - 'order-api/**'
-              - '.github/workflows/ci.yml'
-              - '.github/workflows/reusable-ci.yml'
+              - '.github/workflows/**' # <--- Triggers if ANY workflow changes
             auth-server: 
               - 'auth-server/**'
-              - '.github/workflows/ci.yml'
-              - '.github/workflows/reusable-ci.yml'
+              - '.github/workflows/**' # <--- Triggers if ANY workflow changes
             api-gateway: 
               - 'api-gateway/**'
-              - '.github/workflows/ci.yml'
-              - '.github/workflows/reusable-ci.yml'            
+              - '.github/workflows/**' # <--- Triggers if ANY workflow changes
             book-api: 
               - 'book-api/**'
-              - '.github/workflows/ci.yml'
-              - '.github/workflows/reusable-ci.yml'            
+              - '.github/workflows/**' # <--- Triggers if ANY workflow changes
             config-server: 
               - 'config-server/**'
-              - '.github/workflows/ci.yml'
-              - '.github/workflows/reusable-ci.yml'
+              - '.github/workflows/**' # <--- Triggers if ANY workflow changes
             bookstore-eureka-server: 
               - 'bookstore-eureka-server/**'
-              - '.github/workflows/ci.yml'
-              - '.github/workflows/reusable-ci.yml'
+              - '.github/workflows/**' # <--- Triggers if ANY workflow changes
 
-  build:
-    needs: changes
-    # Comment this out temporarily so the job runs even if the filter returns empty
-    # if: ${{ needs.changes.outputs.services != '[]' }}
-    strategy:
-      matrix:
-        # Explicitly hardcode the services for this run
-        service: [order-api, auth-server, api-gateway, book-api, config-server, bookstore-eureka-server]
-    uses: ./.github/workflows/reusable-ci.yml
-    with:
-      service-name: ${{ matrix.service }}
-      context-path: './${{ matrix.service }}'
-    secrets: inherit
-
-  # This job triggers the build for ONLY the services that changed
 #  build:
 #    needs: changes
-#    #if: ${{ needs.changes.outputs.services != '[]' }}
+#    # ADD THIS BLOCK TO YOUR ROOT WORKFLOW
+#    permissions:
+#      contents: read
+#      packages: write  # <--- Authorizes the root job to pass write scopes downstream
+#    # Comment this out temporarily so the job runs even if the filter returns empty
+#    # if: ${{ needs.changes.outputs.services != '[]' }}
 #    strategy:
 #      matrix:
-#        service: ${{ fromJson(needs.changes.outputs.services) }}
+#        # Explicitly hardcode the services for this run
+#        service: [order-api, auth-server, api-gateway, book-api, config-server, bookstore-eureka-server]
 #    uses: ./.github/workflows/reusable-ci.yml
 #    with:
 #      service-name: ${{ matrix.service }}
 #      context-path: './${{ matrix.service }}'
 #    secrets: inherit
+
+  # This job triggers the build for ONLY the services that changed. Let's see if it works ...!!!
+  build:
+    needs: changes
+    # Only run if the changes job actually detected service modifications
+    if: ${{ (needs.changes.outputs.services != '[]' && needs.changes.outputs.services != '') || needs.changes.outputs.force_all == 'true' }}
+    strategy:
+#      max-parallel: 3
+      matrix:
+        # Evaluate: If force_all is true, use hardcoded full list. Otherwise, use filter output array.
+        service: ${{ needs.changes.outputs.force_all == 'true' && fromJson('["order-api", "auth-server", "api-gateway", "book-api", "config-server", "bookstore-eureka-server"]') || fromJson(needs.changes.outputs.services) }}
+    permissions:
+      contents: read
+      packages: write
+    uses: ./.github/workflows/reusable-ci.yml
+    with:
+      service-name: ${{ matrix.service }}
+      context-path: './${{ matrix.service }}'
+    secrets: inherit

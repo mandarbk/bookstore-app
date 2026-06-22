@@ -38,14 +38,12 @@ public class BookController {
     }
 
     @GetMapping
-    // @PreAuthorize("hasAnyAuthority('SCOPE_read:books')")
     public ResponseEntity<List<BookDto>> getAllBooks() {
         log.info("GET /api/books - Fetching all books");
         return ResponseEntity.ok(bookService.getAllBooks());
     }
 
     @GetMapping("/{id}")
-    // @PreAuthorize("hasAnyAuthority('SCOPE_read:books')")
     public ResponseEntity<BookDto> getBookById(@PathVariable String id) {
         log.info("GET /api/books/{} - Fetching book by id", id);
         return bookService.getBookById(id)
@@ -54,7 +52,6 @@ public class BookController {
     }
 
     @GetMapping("/isbn/{isbn}")
-    @PreAuthorize("hasAnyAuthority('SCOPE_read:books')")
     public ResponseEntity<BookDto> getBookByIsbn(@PathVariable String isbn) {
         log.info("GET /api/books/isbn/{} - Fetching book by isbn", isbn);
         return bookService.getBookByIsbn(isbn)
@@ -63,28 +60,24 @@ public class BookController {
     }
 
     @GetMapping("/author/{author}")
-    @PreAuthorize("hasAnyAuthority('SCOPE_read:books')")
     public ResponseEntity<List<BookDto>> getBooksByAuthor(@PathVariable String author) {
         log.info("GET /api/books/author/{} - Fetching books by author", author);
         return ResponseEntity.ok(bookService.getBooksByAuthor(author));
     }
 
     @GetMapping("/search")
-    @PreAuthorize("hasAnyAuthority('SCOPE_read:books')")
     public ResponseEntity<List<BookDto>> searchBooks(@RequestParam String title) {
         log.info("GET /api/books/search - Searching books by title: {}", title);
         return ResponseEntity.ok(bookService.searchBooksByTitle(title));
     }
 
     @PostMapping
-    @PreAuthorize("hasAnyAuthority('SCOPE_write:books')")
     public ResponseEntity<Book> createBook(@RequestBody Book book) {
         log.info("POST /api/books - Creating new book: {}", book.getTitle());
         return ResponseEntity.status(HttpStatus.CREATED).body(bookService.createBook(book));
     }
 
     @PutMapping("/{id}")
-    @PreAuthorize("hasAnyAuthority('SCOPE_write:books')")
     public ResponseEntity<Book> updateBook(@PathVariable Long id, @RequestBody Book bookUpdates) {
         log.info("PUT /api/books/{} - Updating book", id);
         try {

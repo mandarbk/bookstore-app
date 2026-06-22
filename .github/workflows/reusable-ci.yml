@@ -1,3 +1,5 @@
+# Let's see if a change to workflow definition triggers a full build across all services.
+
 name: Reusable Build and Manifest Update
 
 on:
@@ -11,12 +13,15 @@ on:
       DOCKER_PASSWORD: { required: true }
 
 env:
-  DOCKER_REGISTRY: index.docker.io # Update with your registry
-  IMAGE_NAME:  ${{ inputs.service-name }}
+  DOCKER_REGISTRY: ghcr.io # Update with your registry
+  IMAGE_NAME: ${{ github.repository_owner }}/${{ inputs.service-name }}
 
 jobs:
-  build-and-test:
+  build-and-deploy:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write  # <--- This gives the GITHUB_TOKEN the power to push images
     steps:
       - name: Checkout Code
         uses: actions/checkout@v6
@@ -31,37 +36,51 @@ jobs:
       - name: Build and Test (Reactor)
         run: mvn clean install -pl ${{ inputs.service-name }} -am -DskipTests
 
-      - name: Verify Secret Availability
-        run: |
-          if [ -z "${{ secrets.DOCKER_USERNAME }}" ]; then echo "Username is EMPTY"; else echo "Username is populated"; fi
-          if [ -z "${{ secrets.DOCKER_PASSWORD }}" ]; then echo "Password is EMPTY"; else echo "Password is populated"; fi
+      # --fail-at-end ensures target/surefire-reports are generated even if tests fail
+      - name: Build and Run Tests
+        run: mvn test --batch-mode --fail-at-end
 
-#      - name: Run Unit Tests
-#        run: mvn test
+      # This runs whether the previous test step succeeded or failed
+      - name: Publish Surefire Test Report
+        if: success() || failure()
+        uses: ScalableCapital/action-surefire-report@v2
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
 
-  docker-build-push:
-    needs: build-and-test
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout Code
-        uses: actions/checkout@v6
+################### Disabling Integration TESTS  FOR NOW .......!!!!!
+#      # Use 'verify' instead of 'test' to trigger the Failsafe plugin
+#      - name: Build and Run All Tests
+#        run: mvn clean verify --batch-mode
+#
+#      # Publish both Surefire (Unit) and Failsafe (Integration) results
+#      - name: Publish Test Report
+#        if: success() || failure()
+#        uses: ScalableCapital/action-surefire-report@v2
+#        with:
+#          github_token: ${{ secrets.GITHUB_TOKEN }}
+#          # Tells the action to look for both sets of XML reports
+#          report_paths: |
+#            **/target/surefire-reports/TEST-*.xml
+#            **/target/failsafe-reports/TEST-*.xml
 
       - name: Login to Container Registry
-        uses: docker/login-action@v3
+        uses: docker/login-action@v4
         with:
           registry: ${{ env.DOCKER_REGISTRY }}
-          username: ${{ secrets.DOCKER_USERNAME }}
-          password: ${{ secrets.DOCKER_PASSWORD }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Build and Push Docker Image
         uses: docker/build-push-action@v6
         with:
           context: ${{ inputs.context-path }}
-          file: ./Dockerfile # Path to your multi-stage Dockerfile
+          file: ${{ inputs.context-path }}/Dockerfile
           push: true
           # Tags the image with the git commit hash for traceability
-          #tags: ${{ env.DOCKER_REGISTRY }}/${{ inputs.service-name }}:${{ github.sha }}
-          tags: ${{ secrets.DOCKER_USERNAME }}/${{ inputs.service-name }}:${{ github.sha }}
+          # tags: ${{ secrets.DOCKER_USERNAME }}/${{ inputs.service-name }}:${{ github.sha }}
+          tags: |
+            ghcr.io/${{ env.IMAGE_NAME }}:${{ github.sha }}
+            ghcr.io/${{ env.IMAGE_NAME }}:latest
 
 #  update-manifest:
 #    needs: docker-build-push
