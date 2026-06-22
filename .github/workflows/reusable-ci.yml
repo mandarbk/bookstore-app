@@ -11,7 +11,7 @@ on:
       DOCKER_PASSWORD: { required: true }
 
 env:
-  DOCKER_REGISTRY: registry.docker.com # Update with your registry
+  DOCKER_REGISTRY: index.docker.io # Update with your registry
   IMAGE_NAME:  ${{ inputs.service-name }}
 
 jobs:
@@ -55,7 +55,8 @@ jobs:
           file: ./Dockerfile # Path to your multi-stage Dockerfile
           push: true
           # Tags the image with the git commit hash for traceability
-          tags: ${{ env.DOCKER_REGISTRY }}/${{ inputs.service-name }}:${{ github.sha }}
+          #tags: ${{ env.DOCKER_REGISTRY }}/${{ inputs.service-name }}:${{ github.sha }}
+          tags: ${{ secrets.DOCKER_USERNAME }}/${{ inputs.service-name }}:${{ github.sha }}
 
 #  update-manifest:
 #    needs: docker-build-push
