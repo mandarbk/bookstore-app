@@ -108,17 +108,14 @@ jobs:
   build:
     needs: changes
     # Only run if the changes job actually detected service modifications
-    if: (needs.changes.outputs.services != '[]' && needs.changes.outputs.services != '') || needs.changes.outputs.force_all == 'true'
-
+    if: ${{ (needs.changes.outputs.services != '[]' && needs.changes.outputs.services != '') || needs.changes.outputs.force_all == 'true' }}
     strategy:
       matrix:
-        # Dynamically parse the list of altered services from the filter output
-        service: ${{ fromJson(needs.changes.outputs.services) }}
-
+        # Evaluate: If force_all is true, use hardcoded full list. Otherwise, use filter output array.
+        service: ${{ needs.changes.outputs.force_all == 'true' && fromJson('["order-api", "auth-server", "api-gateway", "book-api", "config-server", "bookstore-eureka-server"]') || fromJson(needs.changes.outputs.services) }}
     permissions:
       contents: read
       packages: write
-
     uses: ./.github/workflows/reusable-ci.yml
     with:
       service-name: ${{ matrix.service }}
