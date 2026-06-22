@@ -52,6 +52,7 @@ jobs:
       - uses: dorny/paths-filter@v4
         id: filter
         with:
+          base: ${{ github.event.before }}
           filters: |
             order-api: 
               - 'order-api/**'
