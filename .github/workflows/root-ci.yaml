@@ -98,22 +98,22 @@ jobs:
 #    secrets: inherit
 
   # This job triggers the build for ONLY the services that changed
-build:
-  needs: changes
-  # Only run if the changes job actually detected service modifications
-  if: ${{ needs.changes.outputs.services != '[]' && needs.changes.outputs.services != '' }}
+  build:
+    needs: changes
+    # Only run if the changes job actually detected service modifications
+    if: ${{ needs.changes.outputs.services != '[]' && needs.changes.outputs.services != '' }}
 
-  strategy:
-    matrix:
-      # Dynamically parse the list of altered services from the filter output
-      service: ${{ fromJson(needs.changes.outputs.services) }}
+    strategy:
+      matrix:
+        # Dynamically parse the list of altered services from the filter output
+        service: ${{ fromJson(needs.changes.outputs.services) }}
 
-  permissions:
-    contents: read
-    packages: write
+    permissions:
+      contents: read
+      packages: write
 
-  uses: ./.github/workflows/reusable-ci.yml
-  with:
-    service-name: ${{ matrix.service }}
-    context-path: './${{ matrix.service }}'
-  secrets: inherit
+    uses: ./.github/workflows/reusable-ci.yml
+    with:
+      service-name: ${{ matrix.service }}
+      context-path: './${{ matrix.service }}'
+    secrets: inherit
