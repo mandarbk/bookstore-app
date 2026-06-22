@@ -1,0 +1,10 @@
+
+spring:
+  application:
+    name: books-service
+  config:
+    import: configserver:http://configserver:8888
+
+ 
+
+

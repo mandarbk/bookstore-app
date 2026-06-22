@@ -1,0 +1,331 @@
+# version: '3.8'
+
+services:
+  # Primary Database - MySQL
+  mysql-primary:
+    image: mysql:8.0
+    container_name: mysql-primary
+    environment:
+      MYSQL_ROOT_PASSWORD: rootpassword
+      MYSQL_DATABASE: bookstore
+      MYSQL_USER: bookuser
+      MYSQL_PASSWORD: bookpass123
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql-primary-data:/var/lib/mysql
+      - ./init-scripts:/docker-entrypoint-initdb.d
+    networks:
+      - bookstore-network
+    healthcheck:
+      # test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      test: ["CMD-SHELL", "mysql -u root -p$$MYSQL_ROOT_PASSWORD -e 'SHOW DATABASES;' | grep -q 'auth_bookstore' || exit 1"]
+      timeout: 20s
+      retries: 10
+      interval: 5s
+    command: --default-authentication-plugin=mysql_native_password
+
+  # Read Replica Database - MySQL
+  mysql-replica:
+    image: mysql:8.0
+    container_name: mysql-replica
+    environment:
+      MYSQL_ROOT_PASSWORD: rootpassword
+      MYSQL_DATABASE: bookstore
+      # MYSQL_USER: bookuser
+      # MYSQL_PASSWORD: bookpass123
+    ports:
+      - "3307:3306"
+    volumes:
+      - mysql-replica-data:/var/lib/mysql
+    networks:
+      - bookstore-network
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      timeout: 20s
+      retries: 10
+      interval: 30s
+    command: --default-authentication-plugin=mysql_native_password
+    depends_on:
+      mysql-primary:
+        condition: service_healthy
+
+  eureka-server:
+    image: eureka-server:latest
+    build:
+      context: ./bookstore-eureka-server # Path to your Eureka project folder
+      dockerfile: Dockerfile
+    container_name: eureka-server
+    ports:
+      - "8761:8761"
+    networks:
+      - bookstore-network
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:8761/actuator/health | grep -q 'UP' || exit 1"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+  auth-server:
+    image: auth-server:latest
+    build:
+      context: ./auth-server   # Path to your Auth Server folder
+      dockerfile: Dockerfile
+    container_name: auth-server
+    environment:
+      SPRING_PROFILES_ACTIVE: local
+      DATABASE_HOST: mysql-primary
+      DATABASE_REPLICA_HOST: mysql-replica
+      EUREKA_SERVER_HOST: eureka-server
+      GATEWAY_URL: http://api-gateway:8090
+      GATEWAY_EXTERNAL_URL: http://localhost:8090
+    ports:
+      - "8082:8082"
+    networks:
+      - bookstore-network
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:8082/.well-known/openid-configuration | grep -q 'issuer' || exit 1"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+    depends_on:
+      eureka-server:
+        condition: service_healthy
+      mysql-primary:
+        condition: service_healthy
+      mysql-replica:
+        condition: service_healthy
+
+
+  books-service:
+    image: books-service:latest
+    build:
+      context: ./book-api  # Path to your Books Microservice folder
+      dockerfile: Dockerfile
+    container_name: books-service
+    environment:
+      SPRING_PROFILES_ACTIVE: local
+      DATABASE_HOST: mysql-primary
+      DATABASE_REPLICA_HOST: mysql-replica
+      EUREKA_SERVER_URL: http://eureka-server:8761
+      GATEWAY_URL: http://api-gateway:8090
+      SPRING_DATA_REDIS_HOST: redis
+      SPRING_DATA_REDIS_PORT: 6379
+    ports:
+      - "8081:8081"
+    networks:
+      - bookstore-network
+    healthcheck:
+      # Queries the readiness probe; -q silences logs, -O - redirects output to stdout
+      test: ["CMD", "wget", "-no-check-certificate", "-q", "-O", "-", "http://localhost:8081/actuator/health/readiness"]
+      interval: 10s     # How often to check health
+      timeout: 5s       # How long to wait for a response before failing
+      retries: 3       # Number of consecutive failures before marking 'unhealthy'
+      start_period: 30s # Grace period giving the JVM/Tomcat enough time to boot up
+    depends_on:
+      eureka-server:
+        condition: service_healthy
+      auth-server:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  order-service:
+    image: order-service:latest
+    build:
+      context: ./order-api  # Path to your Books Microservice folder
+      dockerfile: Dockerfile
+    container_name: order-service
+    environment:
+      SPRING_PROFILES_ACTIVE: local
+      DATABASE_HOST: mysql-primary
+      DATABASE_REPLICA_HOST: mysql-replica
+      EUREKA_SERVER_URL: http://eureka-server:8761
+      GATEWAY_URL: http://api-gateway:8090
+      SPRING_DATA_REDIS_HOST: redis
+      SPRING_DATA_REDIS_PORT: 6379
+    ports:
+      - "8085:8085"
+    networks:
+      - bookstore-network
+    healthcheck:
+      # Queries the readiness probe; -q silences logs, -O - redirects output to stdout
+      test: ["CMD", "wget", "-no-check-certificate", "-q", "-O", "-", "http://localhost:8085/actuator/health/readiness"]
+      interval: 10s     # How often to check health
+      timeout: 5s       # How long to wait for a response before failing
+      retries: 3       # Number of consecutive failures before marking 'unhealthy'
+      start_period: 30s # Grace period giving the JVM/Tomcat enough time to boot up
+    depends_on:
+      eureka-server:
+        condition: service_healthy
+      auth-server:
+        condition: service_healthy
+      books-service:
+        condition: service_healthy
+
+  cart-management-service:
+    image: cart-management-service:latest
+    build:
+      context: ./cart-management-service  # Path to your Books Microservice folder
+      dockerfile: Dockerfile
+    container_name: cart-management-service
+    environment:
+      SPRING_PROFILES_ACTIVE: local
+      DATABASE_HOST: mysql-primary
+      DATABASE_REPLICA_HOST: mysql-replica
+      EUREKA_SERVER_URL: http://eureka-server:8761
+      GATEWAY_URL: http://api-gateway:8090
+      SPRING_DATA_REDIS_HOST: redis
+      SPRING_DATA_REDIS_PORT: 6379
+    ports:
+      - "8091:8091"
+    networks:
+      - bookstore-network
+    healthcheck:
+      # Queries the readiness probe; -q silences logs, -O - redirects output to stdout
+      test: ["CMD", "wget", "-no-check-certificate", "-q", "-O", "-", "http://localhost:8091/actuator/health/readiness"]
+      interval: 10s     # How often to check health
+      timeout: 5s       # How long to wait for a response before failing
+      retries: 3       # Number of consecutive failures before marking 'unhealthy'
+      start_period: 30s # Grace period giving the JVM/Tomcat enough time to boot up
+    depends_on:
+      eureka-server:
+        condition: service_healthy
+      auth-server:
+        condition: service_healthy
+      books-service:
+        condition: service_healthy
+
+
+  api-gateway:
+    image: api-gateway:latest
+    build:
+      context: ./api-gateway    # Path to your API Gateway folder
+      dockerfile: Dockerfile
+    container_name: api-gateway
+    environment:
+      CONFIG_SERVER_HOST: configserver
+      CONFIG_SERVER_PORT: 8888
+      SPRING_PROFILES_ACTIVE: local
+      SPRING_DATA_REDIS_HOST: redis
+      SPRING_DATA_REDIS_PORT: 6379
+      EUREKA_SERVER_URL: http://eureka-server:8761
+    ports:
+      - "8080:8090"
+    networks:
+      - bookstore-network
+    depends_on:
+      redis:
+        condition: service_healthy
+      eureka-server:
+        condition: service_healthy
+      auth-server:
+        condition: service_healthy
+      configserver:
+        condition: service_started
+
+  redis:
+    image: redis:8
+    container_name: redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    networks:
+      - bookstore-network
+    volumes:
+      - redis-data:/data
+    command:
+      [
+        "redis-server",
+        "--appendonly",
+        "yes"
+      ]
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+  configserver:
+    image: configserver:latest
+    build:
+      context: ./config-server    # Path to your API Gateway folder
+      dockerfile: Dockerfile
+    container_name: configserver
+    environment:
+      EUREKA_SERVER_URL: http://eureka-server:8761
+      # Ensure following settings are enforce thro env variables only 
+      # adding them to application yaml is too late for config server to react...!!!
+      # The issue is that when you put those Git properties into application.yml and restart, the config-server is triggering its "Client" auto-configuration again. Because it sees a configuration source (the Git repository), it assumes it should attempt to fetch its own startup properties from the Config Server API (which is itself).
+      SPRING_CLOUD_CONFIG_ENABLED: "false"
+      SPRING_CLOUD_CONFIG_CLIENT_ENABLED: "false"
+      SPRING_CLOUD_CONFIG_URI: ""
+      SPRING_CONFIG_IMPORT: "optional:configserver:"
+      
+      # # JAVA_OPTS: "-Dspring.cloud.config.client.enabled=false"
+      # GIT_SSH_COMMAND: "ssh -o StrictHostKeyChecking=no"
+      # SPRING_CLOUD_CONFIG_SERVER_GIT_STRICT_HOST_KEY_CHECKING: "false"
+      # SPRING_CLOUD_CONFIG_SERVER_GIT_URI: http://git-server:3000/mandarbk/config-server-repo.git
+      #SPRING_CLOUD_CONFIG_SERVER_GIT_URI: "http://mandarbk:M@ndar123@git-server:3000/mandarbk/config-server-repo.git"
+      # SPRING_CLOUD_CONFIG_SERVER_GIT_SKIP_SSL_VALIDATION: "true"
+      # SPRING_CLOUD_CONFIG_SERVER_GIT_FORCE_PULL: "true"
+      # SPRING_CLOUD_CONFIG_SERVER_GIT_DEFAULT_LABEL: master
+      # SPRING_CLOUD_CONFIG_SERVER_GIT_CLONE_ON_START: "true"
+      # SPRING_CLOUD_CONFIG_SERVER_GIT_REFRESH_RATE: 600
+      # SPRING_CLOUD_CONFIG_SERVER_GIT_USERNAME: mandarbk
+      # SPRING_CLOUD_CONFIG_SERVER_GIT_PASSWORD: M@ndar123
+      # Increase the wait time for Git operations to 10 seconds
+      # SPRING_CLOUD_CONFIG_SERVER_GIT_TIMEOUT: 5
+      # Keep these to ensure it stays in sync
+      #SPRING_CLOUD_CONFIG_SERVER_GIT_SEARCH_PATHS: api-gateway
+      # SPRING_CLOUD_CONFIG_SERVER_GIT_SEARCH_PATHS: "{application}"
+      # SPRING_CLOUD_CONFIG_SERVER_GIT_TIMEOUT: 5
+    ports:
+      - "8888:8888"
+    networks:
+      - bookstore-network
+    # command: >
+    #   sh -c "until nc -z git-server 3000; do echo 'Waiting for Gitea http...'; sleep 2; done;
+    #          java -jar /application/app.jar"
+    #volumes:
+      # Map host path to container path
+      #- /home/mandarbk/work/config-server-repo-root:/config-repo
+      #- /home/mandarbk/work/claude-spring-demo/config-server/ssh-keys/id_rsa:/root/.ssh/id_rsa
+    depends_on:
+      eureka-server:
+        condition: service_healthy
+      git-server:
+        condition: service_healthy
+
+  git-server:
+    image: gitea/gitea:latest
+    container_name: gitea
+    environment:
+      - USER_UID=1000
+      - USER_GID=1000
+    volumes:
+      - /home/mandarbk/work/config-server-repo-root/gitea_data:/data
+    ports:
+      - "3000:3000"
+      - "2222:22"
+    networks:
+      - bookstore-network
+    healthcheck:
+      # Test if Gitea's internal port 3000 is accepting connections
+      test: ["CMD", "curl", "-f", "http://localhost:3000"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+volumes:
+  mysql-primary-data:
+    driver: local
+  mysql-replica-data:
+    driver: local
+  redis-data:
+    driver: local
+
+networks:
+  bookstore-network:
+    driver: bridge

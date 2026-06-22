@@ -1,0 +1,132 @@
+spring:
+  application:
+    name: order-service
+  config:
+    import: configserver:http://configserver:8888
+
+
+# # app:
+# #   session:
+# #     id : BOOKSTORE_SESSIONID
+# server:
+#   port: 8085
+#   servlet:
+#     context-path: /
+#     # session:
+#     #   cookie:
+#     #     name: ${app.session.id}
+#     #     http-only: true
+#     #     secure: true
+#     #     path: /
+
+# spring:
+#   application:
+#     name: order-service
+#   profiles:
+#     active: dev
+#   web:
+#     error:
+#       include-exception: true
+#       include-message: always
+#       include-stacktrace: always
+
+#   threads:
+#     virtual:
+#       enabled: true
+
+#   # session:
+#   #   # Switches session tracking from JDBC back to Redis
+#   #   store-type: redis
+#   #   timeout: 1800s # 30 minutes
+#   #   redis:
+#   #     # Optional: Groups session keys neatly inside Redis desktop managers
+#   #     namespace: bookstore:session 
+#   #     # Flushes changes to Redis immediately at the end of the request
+#   #     flush-mode: on_save
+
+#   data:
+#     redis:
+#       host: ${SPRING_DATA_REDIS_HOST:localhost}
+#       port: 6379
+#       connect-timeout: 5000ms
+#       timeout: 5000ms
+#       lettuce:
+#         pool:
+#           max-active: 20 # Tuned high to comfortably handle Virtual Threads
+#           max-idle: 5
+#           min-idle: 2
+
+#   datasource:
+#     primary:
+#       jdbc-url: jdbc:mysql://${DATABASE_HOST:localhost}:3306/bookstore
+#       username: bookuser
+#       password: bookpass123
+#       driver-class-name: com.mysql.cj.jdbc.Driver
+#        # Virtual Threads need faster access to connections to avoid thread pinning/blocking
+#       maximum-pool-size: 10
+#       minimum-idle: 5
+#       idle-timeout: 30000
+#       connection-timeout: 20000
+#     replica:
+#       jdbc-url: jdbc:mysql://${DATABASE_REPLICA_HOST:localhost}:3306/bookstore
+#       username: bookuser
+#       password: bookpass123
+#       driver-class-name: com.mysql.cj.jdbc.Driver
+#        # Virtual Threads need faster access to connections to avoid thread pinning/blocking
+#       maximum-pool-size: 10
+#       minimum-idle: 5
+#       idle-timeout: 30000
+#       connection-timeout: 20000
+
+#   flyway:
+#     enabled: true
+#     user: bookuser
+#     password: bookpass123
+#     url: jdbc:mysql://${DATABASE_HOST:localhost}:3306/bookstore
+#     locations: classpath:db/migration
+#     table: orders_api_server_schema_history
+#     baseline-on-migrate: true
+
+#   jpa:
+#     hibernate:
+#       ddl-auto: none
+#     properties:
+#       hibernate:
+#         dialect: org.hibernate.dialect.MySQLDialect
+#         format_sql: true
+#     show-sql: false
+
+#   security:
+#     oauth2:
+#       resourceserver:
+#         jwt:
+#           jwk-set-uri: lb://auth-server/.well-known/jwks.json
+
+# logging:
+#   level:
+#     root: INFO
+#     com.bookstore: DEBUG
+#     org.springframework.security: DEBUG
+#     org.flywaydb: DEBUG
+#     org.springframework.boot.autoconfigure.flyway: DEBUG
+#     com.bookstore.api.service.feign: DEBUG
+#   pattern:
+#     console: "%d{yyyy-MM-dd HH:mm:ss} - %logger{36} - %msg%n"
+
+# management:
+#   endpoints:
+#     web:
+#       exposure:
+#         include: health,info,metrics
+#   endpoint:
+#     health:
+#       show-details: always
+
+# eureka:
+#   client:
+#     service-url:
+#       defaultZone: ${EUREKA_SERVER_URL}/eureka/ 
+#     fetch-registry: true
+#     register-with-eureka: true
+#   instance:
+#     prefer-ip-address: true # Recommended for cloud/container deployments

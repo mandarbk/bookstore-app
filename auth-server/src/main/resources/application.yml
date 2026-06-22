@@ -1,0 +1,111 @@
+spring:
+  application:
+    name: auth-server
+  config:
+    import: configserver:http://configserver:8888
+    
+# AUTH_SERVER_URL: http://localhost:8082
+# EUREKA_SERVER_URL: http://localhost:8761
+# GATEWAY_EXTERNAL_URL: http://localhost:8080
+# spring:
+#   application:
+#     name: auth-server
+
+#   threads:
+#     virtual:
+#       enabled: true
+
+#   datasource:
+#     primary:
+#       jdbc-url: jdbc:mysql://${DATABASE_HOST:localhost}:3306/auth_bookstore
+#       username: auth_app_user
+#       password: authappsecurepass123
+#       driver-class-name: com.mysql.cj.jdbc.Driver
+#       # Virtual Threads need faster access to connections to avoid thread pinning/blocking
+#       maximum-pool-size: 10
+#       minimum-idle: 10
+#       idle-timeout: 30000
+#       connection-timeout: 20000
+#     replica:
+#       jdbc-url: jdbc:mysql://${DATABASE_REPLICA_HOST:localhost}:3306/auth_bookstore
+#       username: auth_app_user
+#       password: authappsecurepass123
+#       driver-class-name: com.mysql.cj.jdbc.Driver
+#       maximum-pool-size: 10
+#       minimum-idle: 10
+#       idle-timeout: 30000
+#       connection-timeout: 20000
+
+#   flyway:
+#     enabled: true
+#     user: auth_app_user
+#     password: authappsecurepass123
+#     url: jdbc:mysql://${DATABASE_HOST:localhost}:3306/auth_bookstore
+#     locations: classpath:db/migration
+#     table: auth_server_schema_history
+#     baseline-on-migrate: false
+
+
+#   # FIX: Shifted left by 2 spaces to sit directly under 'spring:'
+#   security:
+#     oauth2:
+#       authorizationserver:
+#         client:
+#           api-gateway-client:
+#             registration:
+#               client-id: api-gateway-client
+#               client-secret: "123456" 
+#               client-authentication-methods:
+#                 - "client_secret_basic"
+#                 - "client_secret_post"
+#               authorization-grant-types:
+#                 - "authorization_code"
+#                 - "refresh_token"
+#               redirect-uris:
+#                 - "http://${GATEWAY_EXTERNAL_URL}/login/oauth2/code/api-gateway-client"
+#               scopes:
+#                 - "openid"
+#                 - "profile"
+#                 - "email"
+#                 - "offline_access"
+
+# server:
+#   port: 8082
+#   servlet:
+#     context-path: /
+#     session:
+#       cookie:
+#         name: AUTH_SERVER_SESSION
+
+# # flyway:
+# #   locations: classpath:db/migration
+# #   enabled: true
+# #   table: auth_server_schema_history
+# #   baseline-on-migrate: false
+
+# logging:
+#   level:
+#     root: INFO
+#     org.springframework.security: DEBUG
+#     org.flywaydb: DEBUG
+#     org.springframework.boot.autoconfigure.flyway: DEBUG
+#   pattern:
+#     console: "%d{yyyy-MM-dd HH:mm:ss} - %logger{36} - %msg%n"
+
+# management:
+#   endpoints:
+#     web:
+#       exposure:
+#         include: health,info,metrics, beans, env, configprops, mappings
+#   endpoint:
+#     health:
+#       show-details: always
+
+# eureka:
+#   client:
+#     service-url:
+#       defaultZone: ${EUREKA_SERVER_URL}/eureka/ 
+#     fetch-registry: true
+#     register-with-eureka: true
+#   instance:
+#     prefer-ip-address: true 

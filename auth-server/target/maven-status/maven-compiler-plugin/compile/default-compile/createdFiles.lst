@@ -1,0 +1,7 @@
+com/bookstore/auth/config/AuthorizationServerConfig.class
+com/bookstore/auth/config/JwtKeyProperties.class
+com/bookstore/auth/config/ClientDatabaseInitializer.class
+com/bookstore/auth/config/SecurityConfig.class
+com/bookstore/auth/AuthServerApplication.class
+com/bookstore/auth/controller/RegisteredClientDetails.class
+com/bookstore/auth/controller/DebugClientController.class

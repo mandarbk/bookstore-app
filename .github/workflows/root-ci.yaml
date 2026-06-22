@@ -1,0 +1,68 @@
+# .github/workflows/ci.yml
+# When you add a new service: You don't create a new workflow file. You just add one line to the filters block in the master ci.yml.
+# When you commit the new folder: The paths-filter will immediately see the new folder, detect it as a change, and trigger the build job automatically.
+# Zero Manual Effort: You never have to trigger a build manually. The system is reactive to the filesystem.
+
+#  This script is essentially a "Smart Router" for your code.
+#  Instead of running everything at once, it inspects your commit to see what changed and only triggers the necessary work.
+#
+#  Here is the breakdown, step-by-step, in plain English.
+#
+# Part 1: The changes job (The Inspector)
+#  This job runs first. Its only goal is to look at the "diff" (the files you just changed) and decide which services need to be built.
+#
+#     uses: dorny/paths-filter@v3: This is a very popular, pre-built GitHub tool. We are feeding it a list of folders (order-service, user-service, etc.).
+#     The logic: If you change a file inside order-service/, the filter marks order-service as "changed." If you change nothing, it marks it as "unchanged."
+#     outputs: services: ${{ steps.filter.outputs.changes }}: The job takes that list of changed services and "exports" it so the next job can read it. Think of this as passing a variable from one hand to another.
+#
+# Part 2: The build job (The Dynamic Factory)
+#  This is where the magic happens. It uses something called a Matrix Strategy.
+#   # needs: changes: This tells GitHub: "Do not start this job until the Inspector (the changes job) has finished telling me what changed."
+#     if: ${{ needs.changes.outputs.services != '[]' }}: This is a safety check.
+#      If you changed a file that isn't part of our services (like a README or the root pom.xml), the list of changes will be empty [].
+#      This line stops the pipeline from running for no reason.
+#    # strategy: matrix: service: ${{ fromJson(...) }}: This is the key.
+#       If you changed one service, the matrix creates one build runner.
+#       If you changed three services at once, the matrix automatically spins up three parallel build runners at the same time.
+#       The variable ${{ matrix.service }} becomes the name of the service (e.g., order-service) for that specific runner.
+#    # uses: ./.github/workflows/reusable-ci.yml:
+#           This is where we call the "Template" we built earlier. We simply pass the service name into the template.
+#
+
+name: Bookstore Application
+run-name: Pipeline run by @${{ github.actor }}
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+
+jobs:
+  # This job detects WHICH services changed in a given commit
+  changes:
+    runs-on: ubuntu-latest
+    outputs:
+      services: ${{ steps.filter.outputs.changes }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dorny/paths-filter@v3
+        id: filter
+        with:
+          filters: |
+            order-service: 'order-service/**'
+            user-service: 'user-service/**'
+            catalog-service: 'catalog-service/**'
+
+  # This job triggers the build for ONLY the services that changed
+  build:
+    needs: changes
+    if: ${{ needs.changes.outputs.services != '[]' }}
+    strategy:
+      matrix:
+        service: ${{ fromJson(needs.changes.outputs.services) }}
+    uses: ./.github/workflows/reusable-ci.yml
+    with:
+      service-name: ${{ matrix.service }}
+      context-path: './${{ matrix.service }}'
+    secrets: inherit

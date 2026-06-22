@@ -1,0 +1,17 @@
+name: Order Service CI
+
+on:
+  push:
+    # This ensures this specific workflow only cares about order-service code
+    paths:
+      - 'order-service/**'
+      - '.github/workflows/order-service-ci.yml'
+      - '.github/workflows/reusable-ci.yml' # Re-run if template changes!
+
+jobs:
+  call-build:
+    uses: ./.github/workflows/reusable-ci.yml
+    with:
+      service-name: 'order-service'
+      context-path: './order-service'
+    secrets: inherit

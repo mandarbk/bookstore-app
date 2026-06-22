@@ -1,0 +1,71 @@
+server:
+  port: 8888
+  tomcat:
+    connection-timeout: 2s
+    keep-alive-timeout: 15s
+    threads: 
+      max: 100
+      min-spare: 25
+
+logging:
+  level:
+    org.springframework.cloud.config: TRACE
+    org.springframework.cloud.config.server.environment: DEBUG
+    org.springframework.cloud.config.server.resource: DEBUG
+
+eureka:
+  client:
+    service-url:
+      defaultZone: ${EUREKA_SERVER_URL}/eureka/
+    fetch-registry: true
+    register-with-eureka: true
+  instance:
+    prefer-ip-address: true
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,env,git,refresh,info
+  endpoint:
+    health:
+      show-details: always
+      show-components: always
+
+spring:
+  application:
+    name: configserver
+
+  cloud:
+    config:
+      enabled: false  # Disables the Config Client
+      server:
+        accept-empty: true
+        enabled: true   # Enables only the Server
+        default-label: master
+        git:
+          enabled: true # Enables the Config Server Git backend
+          uri: http://git-server:3000/mandarbk/config-server-repo.git
+          username: mandarbk
+          password: M@ndar123
+          force-pull: true
+          clone-on-start: true
+          skip-ssl-validation: true
+          default-label: master
+          refresh-rate: 600
+          timeout: 5
+          search-paths: '{application}'
+
+  # cloud:
+  #   config:
+  #     server:
+  #       git:
+  #         # Use file:// for local paths
+  #         uri: file:///home/mandarbk/work/config-server-repo-root/config-server-repo.git
+  #         force-pull: true
+  #         search-paths: '/*'
+  #         default-label: master
+  #         clone-on-start: true
+  #         timeout: 5
+
+

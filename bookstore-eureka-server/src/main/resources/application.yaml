@@ -1,0 +1,35 @@
+spring:
+  application:
+    name: eureka-server
+  profiles:
+    active: dev
+
+server:
+  port: 8761
+
+management:
+  endpoints:
+    web:
+      exposure:
+        # 1. Explicitly exposes the health endpoint over the HTTP port
+        include: health 
+  endpoint:
+    health:
+      # 2. Shows full disk space, database, and status details (useful for debugging)
+      show-details: always 
+
+eureka:
+  instance:
+    hostname: localhost
+  client:
+    # Set to false for a single local instance so it doesn't look for peer servers
+    register-with-eureka: false 
+    fetch-registry: false
+    service-url:
+      defaultZone: http://${eureka.instance.hostname}:${server.port}/eureka/
+    jersey:
+      enabled: false
+  
+  server:
+    # Prevents Eureka from prematurely evicting services if network glitches occur locally
+    enable-self-preservation: false 

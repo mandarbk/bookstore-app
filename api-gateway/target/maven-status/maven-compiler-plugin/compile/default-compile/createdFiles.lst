@@ -1,0 +1,7 @@
+com/bookstore/gateway/config/SessionConfiguration.class
+com/bookstore/gateway/ApiGatewayApplication.class
+com/bookstore/gateway/controller/DebugRoutesController.class
+com/bookstore/gateway/config/JwtDecoderConfig.class
+com/bookstore/gateway/config/RateLimiterConfig.class
+com/bookstore/gateway/config/SecurityConfig.class
+com/bookstore/gateway/config/GatewayRoutes.class
