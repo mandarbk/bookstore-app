@@ -1,7 +1,0 @@
-/home/mandarbk/work/claude-spring-demo/api-gateway/src/main/java/com/bookstore/gateway/ApiGatewayApplication.java
-/home/mandarbk/work/claude-spring-demo/api-gateway/src/main/java/com/bookstore/gateway/config/GatewayRoutes.java
-/home/mandarbk/work/claude-spring-demo/api-gateway/src/main/java/com/bookstore/gateway/config/JwtDecoderConfig.java
-/home/mandarbk/work/claude-spring-demo/api-gateway/src/main/java/com/bookstore/gateway/config/RateLimiterConfig.java
-/home/mandarbk/work/claude-spring-demo/api-gateway/src/main/java/com/bookstore/gateway/config/SecurityConfig.java
-/home/mandarbk/work/claude-spring-demo/api-gateway/src/main/java/com/bookstore/gateway/config/SessionConfiguration.java
-/home/mandarbk/work/claude-spring-demo/api-gateway/src/main/java/com/bookstore/gateway/controller/DebugRoutesController.java

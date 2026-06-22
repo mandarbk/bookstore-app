@@ -1,7 +1,0 @@
-/home/mandarbk/work/claude-spring-demo/routing-ds-config/src/main/java/com/bookstore/ds/config/ApplicationConfiguration.java
-/home/mandarbk/work/claude-spring-demo/routing-ds-config/src/main/java/com/bookstore/ds/config/DataSourceConfig.java
-/home/mandarbk/work/claude-spring-demo/routing-ds-config/src/main/java/com/bookstore/ds/config/DataSourceContextHolder.java
-/home/mandarbk/work/claude-spring-demo/routing-ds-config/src/main/java/com/bookstore/ds/config/FlywayMigrationInitializer.java
-/home/mandarbk/work/claude-spring-demo/routing-ds-config/src/main/java/com/bookstore/ds/config/JsonConfig.java
-/home/mandarbk/work/claude-spring-demo/routing-ds-config/src/main/java/com/bookstore/ds/config/RoutingDataSource.java
-/home/mandarbk/work/claude-spring-demo/routing-ds-config/src/main/java/com/bookstore/ds/config/TransactionRoutingAspect.java

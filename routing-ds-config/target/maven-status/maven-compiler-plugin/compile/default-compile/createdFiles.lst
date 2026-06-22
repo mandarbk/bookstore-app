@@ -1,8 +1,0 @@
-com/bookstore/ds/config/DataSourceContextHolder$DataSourceType.class
-com/bookstore/ds/config/JsonConfig.class
-com/bookstore/ds/config/ApplicationConfiguration.class
-com/bookstore/ds/config/FlywayMigrationInitializer.class
-com/bookstore/ds/config/DataSourceContextHolder.class
-com/bookstore/ds/config/RoutingDataSource.class
-com/bookstore/ds/config/DataSourceConfig.class
-com/bookstore/ds/config/TransactionRoutingAspect.class

@@ -1,6 +1,0 @@
-/home/mandarbk/work/claude-spring-demo/auth-server/src/main/java/com/bookstore/auth/AuthServerApplication.java
-/home/mandarbk/work/claude-spring-demo/auth-server/src/main/java/com/bookstore/auth/config/AuthorizationServerConfig.java
-/home/mandarbk/work/claude-spring-demo/auth-server/src/main/java/com/bookstore/auth/config/ClientDatabaseInitializer.java
-/home/mandarbk/work/claude-spring-demo/auth-server/src/main/java/com/bookstore/auth/config/JwtKeyProperties.java
-/home/mandarbk/work/claude-spring-demo/auth-server/src/main/java/com/bookstore/auth/config/SecurityConfig.java
-/home/mandarbk/work/claude-spring-demo/auth-server/src/main/java/com/bookstore/auth/controller/DebugClientController.java
