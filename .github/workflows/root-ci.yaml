@@ -50,9 +50,12 @@ jobs:
         id: filter
         with:
           filters: |
-            order-service: 'order-service/**'
-            user-service: 'user-service/**'
-            catalog-service: 'catalog-service/**'
+            order-api: 'order-api/**'
+            auth-server: 'auth-server/**'
+            api-gateway: 'api-gateway/**'
+            book-api: 'book-api/**'
+            config-server: 'config-server/**'
+            eureka-server: 'bookstore-eureka-server/**'
 
   # This job triggers the build for ONLY the services that changed
   build:
