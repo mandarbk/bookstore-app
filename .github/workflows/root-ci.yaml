@@ -81,6 +81,10 @@ jobs:
 
   build:
     needs: changes
+    # ADD THIS BLOCK TO YOUR ROOT WORKFLOW
+    permissions:
+      contents: read
+      packages: write  # <--- Authorizes the root job to pass write scopes downstream
     # Comment this out temporarily so the job runs even if the filter returns empty
     # if: ${{ needs.changes.outputs.services != '[]' }}
     strategy:
