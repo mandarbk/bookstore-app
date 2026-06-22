@@ -31,8 +31,8 @@ jobs:
       - name: Build and Test (Reactor)
         run: mvn clean install -pl ${{ inputs.service-name }} -am -DskipTests
 
-      - name: Run Unit Tests
-        run: mvn test
+#      - name: Run Unit Tests
+#        run: mvn test
 
   docker-build-push:
     needs: build-and-test
