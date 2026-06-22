@@ -31,6 +31,11 @@ jobs:
       - name: Build and Test (Reactor)
         run: mvn clean install -pl ${{ inputs.service-name }} -am -DskipTests
 
+      - name: Verify Secret Availability
+        run: |
+          if [ -z "${{ secrets.DOCKER_USERNAME }}" ]; then echo "Username is EMPTY"; else echo "Username is populated"; fi
+          if [ -z "${{ secrets.DOCKER_PASSWORD }}" ]; then echo "Password is EMPTY"; else echo "Password is populated"; fi
+
 #      - name: Run Unit Tests
 #        run: mvn test
 
