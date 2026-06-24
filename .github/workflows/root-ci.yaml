@@ -35,6 +35,8 @@ run-name: Pipeline run by @${{ github.actor }}
 on:
   push:
     branches: [ main ]
+  pull_request:
+    branches: [ main ]
   workflow_dispatch:
     inputs:
       force-build-all:
@@ -110,6 +112,7 @@ jobs:
     # Only run if the changes job actually detected service modifications
     if: ${{ (needs.changes.outputs.services != '[]' && needs.changes.outputs.services != '') || needs.changes.outputs.force_all == 'true' }}
     strategy:
+      max-parallel: 3
       matrix:
         # Evaluate: If force_all is true, use hardcoded full list. Otherwise, use filter output array.
         service: ${{ needs.changes.outputs.force_all == 'true' && fromJson('["order-api", "auth-server", "api-gateway", "book-api", "config-server", "bookstore-eureka-server"]') || fromJson(needs.changes.outputs.services) }}
