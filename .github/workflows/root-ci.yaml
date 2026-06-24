@@ -28,7 +28,7 @@
 #    # uses: ./.github/workflows/reusable-ci.yml:
 #           This is where we call the "Template" we built earlier. We simply pass the service name into the template.
 #
-
+# Let's see if a change to workflow definition triggers a full build across all services.
 name: Bookstore Application
 run-name: Pipeline run by @${{ github.actor }}
 
