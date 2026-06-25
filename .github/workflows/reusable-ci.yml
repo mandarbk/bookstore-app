@@ -1,3 +1,5 @@
+# Let's see if a change to workflow definition triggers a full build across all services.
+
 name: Reusable Build and Manifest Update
 
 on:
