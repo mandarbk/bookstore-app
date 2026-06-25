@@ -1,12 +1,16 @@
 package com.bookstore.auth;
 
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.jdbc.autoconfigure.DataSourceAutoConfiguration;
 
-@SpringBootApplication(exclude = {DataSourceAutoConfiguration.class})public class AuthServerApplication {
+@SpringBootApplication(exclude = {DataSourceAutoConfiguration.class})
+@Slf4j
+public class AuthServerApplication {
 
     public static void main(String[] args) {
         SpringApplication.run(AuthServerApplication.class, args);
+        log.info("Auth Server Application Started");
     }
 }
