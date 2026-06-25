@@ -57,7 +57,7 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v6
         with:
-          fetch-depth: 2
+          fetch-depth: 1
       - uses: dorny/paths-filter@v4
         id: filter
         with:
@@ -65,27 +65,27 @@ jobs:
           filters: |
             order-api: 
               - 'order-api/**'
-              - '.github/workflows/ci.yml'
+              - '.github/workflows/root-ci.yml'
               - '.github/workflows/reusable-ci.yml'
             auth-server: 
               - 'auth-server/**'
-              - '.github/workflows/ci.yml'
+              - '.github/workflows/root-ci.yml'
               - '.github/workflows/reusable-ci.yml'
             api-gateway: 
               - 'api-gateway/**'
-              - '.github/workflows/ci.yml'
+              - '.github/workflows/root-ci.yml'
               - '.github/workflows/reusable-ci.yml'            
             book-api: 
               - 'book-api/**'
-              - '.github/workflows/ci.yml'
+              - '.github/workflows/root-ci.yml'
               - '.github/workflows/reusable-ci.yml'            
             config-server: 
               - 'config-server/**'
-              - '.github/workflows/ci.yml'
+              - '.github/workflows/root-ci.yml'
               - '.github/workflows/reusable-ci.yml'
             bookstore-eureka-server: 
               - 'bookstore-eureka-server/**'
-              - '.github/workflows/ci.yml'
+              - '.github/workflows/root-ci.yml'
               - '.github/workflows/reusable-ci.yml'
 
 #  build:
