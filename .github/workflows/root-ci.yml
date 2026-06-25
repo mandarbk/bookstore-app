@@ -64,28 +64,22 @@ jobs:
           filters: |
             order-api: 
               - 'order-api/**'
-              - '.github/workflows/root-ci.yml'
-              - '.github/workflows/reusable-ci.yml'
+              - '.github/workflows/**' # <--- Triggers if ANY workflow changes
             auth-server: 
               - 'auth-server/**'
-              - '.github/workflows/root-ci.yml'
-              - '.github/workflows/reusable-ci.yml'
+              - '.github/workflows/**' # <--- Triggers if ANY workflow changes
             api-gateway: 
               - 'api-gateway/**'
-              - '.github/workflows/root-ci.yml'
-              - '.github/workflows/reusable-ci.yml'            
+              - '.github/workflows/**' # <--- Triggers if ANY workflow changes
             book-api: 
               - 'book-api/**'
-              - '.github/workflows/root-ci.yml'
-              - '.github/workflows/reusable-ci.yml'            
+              - '.github/workflows/**' # <--- Triggers if ANY workflow changes
             config-server: 
               - 'config-server/**'
-              - '.github/workflows/root-ci.yml'
-              - '.github/workflows/reusable-ci.yml'
+              - '.github/workflows/**' # <--- Triggers if ANY workflow changes
             bookstore-eureka-server: 
               - 'bookstore-eureka-server/**'
-              - '.github/workflows/root-ci.yml'
-              - '.github/workflows/reusable-ci.yml'
+              - '.github/workflows/**' # <--- Triggers if ANY workflow changes
 
 #  build:
 #    needs: changes
