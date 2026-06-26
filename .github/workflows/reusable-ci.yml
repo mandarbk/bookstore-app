@@ -40,12 +40,14 @@ jobs:
       - name: Build and Run Tests
         run: mvn test --batch-mode --fail-at-end
 
-      # This runs whether the previous test step succeeded or failed
-      - name: Publish Surefire Test Report
-        if: success() || failure()
-        uses: ScalableCapital/action-surefire-report@v2
+      - name: Upload Test Results
+        uses: actions/upload-artifact@v4
+        if: always()
         with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
+          # Use a unique name for each matrix combination/module
+          name: test-results-${{ inputs.service-name }}
+          path: "**/target/*-reports/*.xml"
+          if-no-files-found: ignore
 
 ################### Disabling Integration TESTS  FOR NOW .......!!!!!
 #      # Use 'verify' instead of 'test' to trigger the Failsafe plugin

@@ -105,6 +105,10 @@
                         <version>${maven-surefire.version}</version>
                         <configuration>
                             <testFailureIgnore>true</testFailureIgnore>
+                            <argLine>-Xmx1024m</argLine>
+                            <includes>
+                                <include>**/*Test.java</include>
+                            </includes>
                         </configuration>
                     </plugin>
 
@@ -121,8 +125,20 @@
                                 </goals>
                             </execution>
                         </executions>
+                        <!--
+                            By default, if core-module encounters an integration test failure, Maven halts the entire build immediately.
+                            This stops execution before web-api-module can run its tests, and prevents the GitHub Action from parsing any reports.
+                            The <testFailureIgnore>true</testFailureIgnore> flag in your parent POM ensures Maven goes through every single module and runs all tests.
+                            The GitHub Action will then discover all XML report files across every module, combine the data, and
+                            successfully mark your Pull Request check as Failed if any individual unit or integration test broke.
+                        -->
                         <configuration>
                             <testFailureIgnore>true</testFailureIgnore>
+                            <includes>
+                                <include>**/*IT.java</include>
+                            </includes>
+                            <!-- Ensures Failsafe sees your application classes in Spring Boot -->
+                            <classesDirectory>${project.build.outputDirectory}</classesDirectory>
                         </configuration>
                     </plugin>
                 </plugins>
