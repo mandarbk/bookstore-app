@@ -117,3 +117,25 @@ jobs:
       service-name: ${{ matrix.service }}
       context-path: './${{ matrix.service }}'
     secrets: inherit
+
+  report:
+    needs: [ build ] # Wait for all matrix builds to finish
+    runs-on: ubuntu-latest
+    if: always() # Ensure this runs even if the builds failed
+    permissions:
+      contents: read
+      checks: write
+      pull-requests: write
+    steps:
+      - name: Download all test results
+        uses: actions/download-artifact@v4
+        with:
+          pattern: test-results-*
+          path: all-test-results
+
+      - name: Publish Consolidated Test Results
+        uses: EnricoMi/publish-unit-test-result-action@v2
+        with:
+          files: "all-test-results/**/*.xml"
+          check_name: "Aggregate Test Results"
+          comment_mode: failures
