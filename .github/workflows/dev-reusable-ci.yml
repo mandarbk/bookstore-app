@@ -1,0 +1,67 @@
+# Let's see if a change to workflow definition triggers a full build across all services.
+
+name: Reusable Build and Manifest Update
+
+on:
+  workflow_call:
+    inputs:
+      service-name: { type: string, required: true }
+      context-path: { type: string, required: true }
+    secrets:
+      GIT_PAT: { required: true }
+      DOCKER_USERNAME: { required: true }
+      DOCKER_PASSWORD: { required: true }
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      # packages: write  # <--- This gives the GITHUB_TOKEN the power to push images
+      checks: write     # <--- Required for Publishing the Test Results
+      # pull-requests: write    # <--- Required for adding the Test Results
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v6
+
+      - name: Set up JDK 25
+        uses: actions/setup-java@v5
+        with:
+          java-version: '25'
+          distribution: 'temurin'
+          cache: 'maven'
+
+      - name: Build and Test (Reactor)
+        run: |
+          mvn clean install -pl ${{ inputs.service-name }} -am -DskipTests
+
+      # --fail-at-end ensures target/surefire-reports are generated even if tests fail
+      - name: Build and Run Tests
+        run: mvn test --batch-mode --fail-at-end
+
+      - name: Upload Test Results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          # Use a unique name for each matrix combination/module
+          name: test-results-${{ inputs.service-name }}
+          path: "**/target/*-reports/*.xml"
+          if-no-files-found: ignore
+
+      ################### Disabling Integration TESTS  FOR NOW .......!!!!!
+      #      # Use 'verify' instead of 'test' to trigger the Failsafe plugin
+      #      - name: Build and Run All Tests
+      #        run: mvn clean verify --batch-mode
+      #
+      #      # Publish both Surefire (Unit) and Failsafe (Integration) results
+      #      - name: Publish Test Report
+      #        if: success() || failure()
+      #        uses: ScalableCapital/action-surefire-report@v2
+      #        with:
+      #          github_token: ${{ secrets.GITHUB_TOKEN }}
+      #          # Tells the action to look for both sets of XML reports
+      #          report_paths: |
+      #            **/target/surefire-reports/TEST-*.xml
+      #            **/target/failsafe-reports/TEST-*.xml
+
+
