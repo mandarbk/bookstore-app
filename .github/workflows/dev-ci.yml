@@ -28,7 +28,7 @@
 #    # uses: ./.github/workflows/prod-reusable-ci.yml:
 #           This is where we call the "Template" we built earlier. We simply pass the service name into the template.
 #
-name: Bookstore Application
+name: Bookstore Application-Dev
 run-name: Pipeline run by @${{ github.actor }}
 
 on:
