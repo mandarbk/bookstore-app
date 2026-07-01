@@ -95,6 +95,7 @@ jobs:
         service: ${{ needs.changes.outputs.force_all == 'true' && fromJson('["order-api", "auth-server", "api-gateway", "book-api", "config-server", "bookstore-eureka-server"]') || fromJson(needs.changes.outputs.services) }}
     permissions:
       contents: read
+      packages: write
       checks: write     # <--- Required for Publishing the Test Results
     uses: ./.github/workflows/dev-reusable-ci.yml
     with:
