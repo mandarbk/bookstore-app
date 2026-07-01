@@ -11,6 +11,9 @@ on:
       GIT_PAT: { required: true }
       DOCKER_USERNAME: { required: true }
       DOCKER_PASSWORD: { required: true }
+env:
+  DOCKER_REGISTRY: ghcr.io # Update with your registry
+  IMAGE_NAME: ${{ github.repository_owner }}/${{ inputs.service-name }}
 
 jobs:
   build-and-deploy:
