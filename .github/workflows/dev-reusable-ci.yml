@@ -11,13 +11,15 @@ on:
       GIT_PAT: { required: true }
       DOCKER_USERNAME: { required: true }
       DOCKER_PASSWORD: { required: true }
+env:
+  DOCKER_REGISTRY: ghcr.io # Update with your registry
+  IMAGE_NAME: ${{ github.repository_owner }}/${{ inputs.service-name }}
 
 jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
     permissions:
       contents: read
-      # packages: write  # <--- This gives the GITHUB_TOKEN the power to push images
       checks: write     # <--- Required for Publishing the Test Results
       # pull-requests: write    # <--- Required for adding the Test Results
     steps:
@@ -64,12 +66,12 @@ jobs:
       #            **/target/surefire-reports/TEST-*.xml
       #            **/target/failsafe-reports/TEST-*.xml
 
-      - name: Login to Container Registry
-        uses: docker/login-action@v4
-        with:
-          registry: ${{ env.DOCKER_REGISTRY }}
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
+#      - name: Login to Container Registry
+#        uses: docker/login-action@v4
+#        with:
+#          registry: ${{ env.DOCKER_REGISTRY }}
+#          username: ${{ github.actor }}
+#          password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Docker meta
         id: meta
