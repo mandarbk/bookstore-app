@@ -33,9 +33,9 @@ run-name: Pipeline run by @${{ github.actor }}
 
 on:
   push:
-    branches: [ Sprint ]
+    branches: [ main ]
   pull_request:
-    branches: [ Sprint ]
+    branches: [ main ]
   workflow_dispatch:
     inputs:
       force-build-all:

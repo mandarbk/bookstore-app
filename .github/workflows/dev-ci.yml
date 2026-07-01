@@ -33,7 +33,7 @@ run-name: Pipeline run by @${{ github.actor }}
 
 on:
   push:
-    branches: [ Team-*/Sprint ]
+    branches: [ dev ]
   workflow_dispatch:
     inputs:
       force-build-all:
