@@ -1,0 +1,123 @@
+# Let's see if a change to workflow definition triggers a full build across all services.
+
+name: Reusable Build and Manifest Update
+
+on:
+  workflow_call:
+    inputs:
+      service-name: { type: string, required: true }
+      context-path: { type: string, required: true }
+    secrets:
+      GIT_PAT: { required: true }
+      DOCKER_USERNAME: { required: true }
+      DOCKER_PASSWORD: { required: true }
+
+env:
+  DOCKER_REGISTRY: ghcr.io # Update with your registry
+  IMAGE_NAME: ${{ github.repository_owner }}/${{ inputs.service-name }}
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write  # <--- This gives the GITHUB_TOKEN the power to push images
+      checks: write     # <--- Required for Publishing the Test Results
+      pull-requests: write    # <--- Required for adding the Test Results
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v6
+
+      - name: Set up JDK 25
+        uses: actions/setup-java@v5
+        with:
+          java-version: '25'
+          distribution: 'temurin'
+          cache: 'maven'
+
+      - name: Build and Test (Reactor)
+        run: |
+          mvn clean install -pl ${{ inputs.service-name }} -am -DskipTests
+
+      # --fail-at-end ensures target/surefire-reports are generated even if tests fail
+      - name: Build and Run Tests
+        run: mvn test --batch-mode --fail-at-end
+
+      - name: Upload Test Results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          # Use a unique name for each matrix combination/module
+          name: test-results-${{ inputs.service-name }}
+          path: "**/target/*-reports/*.xml"
+          if-no-files-found: ignore
+
+################### Disabling Integration TESTS  FOR NOW .......!!!!!
+#      # Use 'verify' instead of 'test' to trigger the Failsafe plugin
+#      - name: Build and Run All Tests
+#        run: mvn clean verify --batch-mode
+#
+#      # Publish both Surefire (Unit) and Failsafe (Integration) results
+#      - name: Publish Test Report
+#        if: success() || failure()
+#        uses: ScalableCapital/action-surefire-report@v2
+#        with:
+#          github_token: ${{ secrets.GITHUB_TOKEN }}
+#          # Tells the action to look for both sets of XML reports
+#          report_paths: |
+#            **/target/surefire-reports/TEST-*.xml
+#            **/target/failsafe-reports/TEST-*.xml
+
+      - name: Login to Container Registry
+        uses: docker/login-action@v4
+        with:
+          registry: ${{ env.DOCKER_REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Docker meta
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ghcr.io/${{ env.IMAGE_NAME }}
+          tags: |
+            # 1. Always tag with the commit SHA
+            type=sha,format=short
+            # 2. Tag with the branch name (e.g., dev, main)
+            type=ref,event=branch
+            # 3. If a git tag is pushed (v1.0.0), use that as a tag
+            type=semver,pattern={{version}}
+
+#  cache-from and cache-to are the mechanisms that make your Docker builds fast and incremental instead of building everything from scratch every time.
+#  In a CI environment, every job starts on a "clean" runner. Without caching, Docker would have to re-download all your Java base images, re-install your dependencies, and re-compile your entire Spring Boot project on every single push.
+#  1. The Core Concept
+#      cache-from: Tells the build process: "Before you build, check this location to see if any layers from a previous build already exist." If Docker finds a layer (like the one where you downloaded your Maven dependencies), it reuses it instantly.
+#      cache-to: Tells the build process: "Once the build is finished, upload the new/updated layers to this location so we can use them in the next run."
+#    2. Why type=gha?
+#        The gha type stands for GitHub Actions Cache.
+#        It uses the native GitHub Actions caching service, which is highly optimized for performance within your repository.
+#        It is the easiest way to store and retrieve these "layers" without needing to configure an external storage bucket or complex registry settings.
+##  3. What does mode=max do?
+#        mode=min (Default): Only caches the layers that end up in your final, runnable Docker image.
+#        mode=max: Caches all intermediate layers (e.g., the layers created during the mvn clean install phase, the test layers, etc.).
+#        Why use max: For a Spring Boot multi-module project, your build process likely has multiple stages (e.g., build, test, package).
+#        mode=max ensures that even the intermediate "Maven build" layers are cached.
+#        This is what usually drops a 10-minute build down to 1–2 minutes.
+      - name: Build and Push Docker Image
+        uses: docker/build-push-action@v6
+        with:
+          context: ${{ inputs.context-path }}
+          file: ${{ inputs.context-path }}/Dockerfile
+          push: true
+          # Tags the image with the git commit hash for traceability
+          # tags: ${{ secrets.DOCKER_USERNAME }}/${{ inputs.service-name }}:${{ github.sha }}
+#          tags: |
+#            ghcr.io/${{ env.IMAGE_NAME }}:${{ github.sha }}
+#            ghcr.io/${{ env.IMAGE_NAME }}:latest
+          tags: ${{ steps.meta.outputs.tags }}
+          # Injecting the link here at push time
+          labels: ${{ steps.meta.outputs.labels }} # This injects the Source Repository link
+#          cache-from: type=gha
+#          cache-to: type=gha,mode=max
+
+
