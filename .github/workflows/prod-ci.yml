@@ -114,6 +114,7 @@ jobs:
     permissions:
       contents: read
       checks: write
+      packages: write
       pull-requests: write
     steps:
       - name: Download all test results
