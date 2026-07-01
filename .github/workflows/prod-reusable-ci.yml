@@ -117,7 +117,7 @@ jobs:
           tags: ${{ steps.meta.outputs.tags }}
           # Injecting the link here at push time
           labels: ${{ steps.meta.outputs.labels }} # This injects the Source Repository link
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
+#          cache-from: type=gha
+#          cache-to: type=gha,mode=max
 
 
