@@ -20,7 +20,6 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: read
-      #packages: write  # <--- This gives the GITHUB_TOKEN the power to push images
       checks: write     # <--- Required for Publishing the Test Results
       # pull-requests: write    # <--- Required for adding the Test Results
     steps:
@@ -83,9 +82,9 @@ jobs:
             # 1. Always tag with the commit SHA
             type=sha,format=short
             # 2. Tag with the branch name (e.g., dev, main)
-            # type=ref,event=branch
+            type=ref,event=branch
             # 3. If a git tag is pushed (v1.0.0), use that as a tag
-            # type=semver,pattern={{version}}
+            type=semver,pattern={{version}}
 
       #  cache-from and cache-to are the mechanisms that make your Docker builds fast and incremental instead of building everything from scratch every time.
       #  In a CI environment, every job starts on a "clean" runner. Without caching, Docker would have to re-download all your Java base images, re-install your dependencies, and re-compile your entire Spring Boot project on every single push.
