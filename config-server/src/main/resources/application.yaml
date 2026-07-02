@@ -36,7 +36,9 @@ management:
 spring:
   application:
     name: configserver
-
+  config:
+    activate:
+      on-profile: default
   cloud:
     config:
       enabled: false  # Disables the Config Client
@@ -56,17 +58,3 @@ spring:
           refresh-rate: 600
           timeout: 5
           search-paths: '{application}'
-
-  # cloud:
-  #   config:
-  #     server:
-  #       git:
-  #         # Use file:// for local paths
-  #         uri: file:///home/mandarbk/work/config-server-repo-root/config-server-repo.git
-  #         force-pull: true
-  #         search-paths: '/*'
-  #         default-label: master
-  #         clone-on-start: true
-  #         timeout: 5
-
-

@@ -1,0 +1,44 @@
+
+logging:
+  level:
+    org.springframework.cloud.config.server.environment.JGitEnvironmentRepository: DEBUG
+    org.springframework.cloud.config: TRACE
+    org.springframework.cloud.config.server.environment: DEBUG
+    org.springframework.cloud.config.server.resource: DEBUG
+
+eureka:
+  client:
+    service-url:
+      defaultZone:
+    fetch-registry: false
+    register-with-eureka: false
+    enabled: false
+    healthcheck:
+      enabled: false
+    refresh:
+      enable: false
+  instance:
+    prefer-ip-address:
+
+spring:
+  cloud:
+    discovery:
+      enabled: false
+    config:
+      enabled: false  # Disables the Config Client
+      server:
+        accept-empty: true
+        enabled: true   # Enables only the Server
+        #default-label: main
+        git:
+          enabled: true # Enables the Config Server Git backend
+          force-pull: false
+          clone-on-start: false
+          skip-ssl-validation: true
+          refresh-rate: 600
+          timeout: 5
+          search-paths: '{application}'
+
+  test:
+    print-condition-evaluation-report: false
+debug: false
