@@ -164,6 +164,13 @@ jobs:
           name: trivy-scan-results
           path: trivy-results.sarif
 
+      - name: Upload Trivy scan results to GitHub Security tab
+        uses: github/codeql-action/upload-sarif@v3
+        if: always() # Ensures it runs even if the scan found vulnerabilities
+        with:
+          sarif_file: 'trivy-results.sarif'
+          category: 'trivy-scan'
+
 
 
 
