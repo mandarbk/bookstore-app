@@ -74,6 +74,7 @@ jobs:
       contents: read
       checks: write     # <--- Required for Publishing the Test Results
       packages: write
+      security-events: write
     steps:
       - name: Checkout Code
         uses: actions/checkout@v6
