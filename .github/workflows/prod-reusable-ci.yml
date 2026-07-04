@@ -17,11 +17,10 @@ env:
   IMAGE_NAME: ${{ github.repository_owner }}/${{ inputs.service-name }}
 
 jobs:
-  build-and-deploy:
+  build-and-test:
     runs-on: ubuntu-latest
     permissions:
       contents: read
-      packages: write  # <--- This gives the GITHUB_TOKEN the power to push images
       checks: write     # <--- Required for Publishing the Test Results
       pull-requests: write    # <--- Required for adding the Test Results
     steps:
@@ -34,6 +33,12 @@ jobs:
           java-version: '25'
           distribution: 'temurin'
           cache: 'maven'
+          server-id: nexus-releases
+          server-username: MAVEN_USERNAME
+          server-password: MAVEN_PASSWORD
+        env:
+          MAVEN_USERNAME: ${{ secrets.NEXUS_USER }}
+          MAVEN_PASSWORD: ${{ secrets.NEXUS_PASS }}
 
       - name: Build and Test (Reactor)
         run: |
@@ -52,22 +57,30 @@ jobs:
           path: "**/target/*-reports/*.xml"
           if-no-files-found: ignore
 
-################### Disabling Integration TESTS  FOR NOW .......!!!!!
-#      # Use 'verify' instead of 'test' to trigger the Failsafe plugin
-#      - name: Build and Run All Tests
-#        run: mvn clean verify --batch-mode
-#
-#      # Publish both Surefire (Unit) and Failsafe (Integration) results
-#      - name: Publish Test Report
-#        if: success() || failure()
-#        uses: ScalableCapital/action-surefire-report@v2
-#        with:
-#          github_token: ${{ secrets.GITHUB_TOKEN }}
-#          # Tells the action to look for both sets of XML reports
-#          report_paths: |
-#            **/target/surefire-reports/TEST-*.xml
-#            **/target/failsafe-reports/TEST-*.xml
+      ################### Disabling Integration TESTS  FOR NOW .......!!!!!
+      #      # Use 'verify' instead of 'test' to trigger the Failsafe plugin
+      #      - name: Build and Run All Tests
+      #        run: mvn clean verify --batch-mode
+      #
+      #      # Publish both Surefire (Unit) and Failsafe (Integration) results
+      #      - name: Publish Test Report
+      #        if: success() || failure()
+      #        uses: ScalableCapital/action-surefire-report@v2
+      #        with:
+      #          github_token: ${{ secrets.GITHUB_TOKEN }}
+      #          # Tells the action to look for both sets of XML reports
+      #          report_paths: |
+      #            **/target/surefire-reports/TEST-*.xml
+      #            **/target/failsafe-reports/TEST-*.xml
 
+  build-and-scan-images:
+    name : Deploy Artifacts
+    needs : build-and-test
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write  # <--- This gives the GITHUB_TOKEN the power to push images
+    steps:
       - name: Login to Container Registry
         uses: docker/login-action@v4
         with:
@@ -81,12 +94,10 @@ jobs:
         with:
           images: ghcr.io/${{ env.IMAGE_NAME }}
           tags: |
-            # 1. Always tag with the commit SHA
-            type=sha,format=short
-            # 2. Tag with the branch name (e.g., dev, main)
-            type=ref,event=branch
-            # 3. If a git tag is pushed (v1.0.0), use that as a tag
+            # 1. If a git tag is pushed (v1.0.0), use that as a tag
             type=semver,pattern={{version}}
+            # 2. Always tag with the commit SHA
+            type=sha,format=short
 
 #  cache-from and cache-to are the mechanisms that make your Docker builds fast and incremental instead of building everything from scratch every time.
 #  In a CI environment, every job starts on a "clean" runner. Without caching, Docker would have to re-download all your Java base images, re-install your dependencies, and re-compile your entire Spring Boot project on every single push.
@@ -109,6 +120,7 @@ jobs:
           context: ${{ inputs.context-path }}
           file: ${{ inputs.context-path }}/Dockerfile
           push: true
+          load: true  # Required for local trivy scanning
           # Tags the image with the git commit hash for traceability
           # tags: ${{ secrets.DOCKER_USERNAME }}/${{ inputs.service-name }}:${{ github.sha }}
 #          tags: |
@@ -119,5 +131,51 @@ jobs:
           labels: ${{ steps.meta.outputs.labels }} # This injects the Source Repository link
 #          cache-from: type=gha
 #          cache-to: type=gha,mode=max
+
+      - name: Extract Primary Tag for Trivy
+        id: extract-tag
+        run: |
+          # The metadata-action returns tags separated by newlines
+          # We take the first tag from the list
+          FIRST_TAG=$(echo "${{ steps.meta.outputs.tags }}" | head -n 1)
+          echo "IMAGE_TO_SCAN=$FIRST_TAG" >> $GITHUB_ENV
+
+      - name: Run Trivy Security Scan
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: ${{ env.IMAGE_TO_SCAN }}
+          format: 'sarif'
+          output: 'trivy-results.sarif'
+          exit-code: '1' # Fails the build if high/critical vulns found
+          severity: 'CRITICAL,HIGH'
+
+  deploy:
+    name: Deploy Artifacts
+    needs: build-and-scan-images
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write  # <--- This gives the GITHUB_TOKEN the power to push images
+    steps:
+      - name: Deploy JAR
+        run: mvn -B deploy -pl ${{ inputs.service-name }} -DskipTests
+        env:
+          MAVEN_USERNAME: ${{ secrets.NEXUS_USER }}
+          MAVEN_PASSWORD: ${{ secrets.NEXUS_PASS }}
+
+      - name: Get project version
+        id: get-version
+        run: |
+          # This command extracts the exact version currently in the pom.xml
+          VERSION=$(mvn help:evaluate -Dexpression=project.version -q -DforceStdout -pl ${{ nputs.service-name }})
+          echo "SERVICE_RELEASE_VERSION=$VERSION" >> $GITHUB_ENV
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ github.ref_name }}
+          name: ${{ inputs.service-name }} - ${{ env.SERVICE_RELEASE_VERSION }}
+          generate_release_notes: true
+          files: ${{ inputs.service-name }}/target/*.jar
 
 
