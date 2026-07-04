@@ -67,12 +67,14 @@ jobs:
       #            **/target/failsafe-reports/TEST-*.xml
 
   build-and-scan-images:
-
     name: Deploy Artifacts
     needs: build-and-test
     runs-on: ubuntu-latest
     permissions:
       contents: read
+      checks: write     # <--- Required for Publishing the Test Results
+      packages: write
+      pull-requests: write    # <--- Required for adding the Test Results
     steps:
       - name: Checkout Code
         uses: actions/checkout@v6
