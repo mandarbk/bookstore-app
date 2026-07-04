@@ -16,7 +16,7 @@ env:
   IMAGE_NAME: ${{ github.repository_owner }}/${{ inputs.service-name }}
 
 jobs:
-  build-and-deploy:
+  build-and-test:
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -66,24 +66,26 @@ jobs:
       #            **/target/surefire-reports/TEST-*.xml
       #            **/target/failsafe-reports/TEST-*.xml
 
-#      - name: Login to Container Registry
-#        uses: docker/login-action@v4
-#        with:
-#          registry: ${{ env.DOCKER_REGISTRY }}
-#          username: ${{ github.actor }}
-#          password: ${{ secrets.GITHUB_TOKEN }}
-
+  build-and-scan-images:
+    name: Deploy Artifacts
+    needs: build-and-test
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      #      - name: Login to Container Registry
+      #        uses: docker/login-action@v4
+      #        with:
+      #          registry: ${{ env.DOCKER_REGISTRY }}
+      #          username: ${{ github.actor }}
+      #          password: ${{ secrets.GITHUB_TOKEN }}
       - name: Docker meta
         id: meta
         uses: docker/metadata-action@v5
         with:
           images: ghcr.io/${{ env.IMAGE_NAME }}
           tags: |
-            # 1. Always tag with the commit SHA
-            type=sha,format=short
-            # 2. Tag with the branch name (e.g., dev, main)
-            type=ref,event=branch
-            # 3. If a git tag is pushed (v1.0.0), use that as a tag
+            # 1. If a git tag is pushed (v1.0.0), use that as a tag
             type=semver,pattern={{version}}
 
       #  cache-from and cache-to are the mechanisms that make your Docker builds fast and incremental instead of building everything from scratch every time.
@@ -106,6 +108,7 @@ jobs:
         with:
           context: ${{ inputs.context-path }}
           file: ${{ inputs.context-path }}/Dockerfile
+          load: true
           push: false
           # Tags the image with the git commit hash for traceability
           # tags: ${{ secrets.DOCKER_USERNAME }}/${{ inputs.service-name }}:${{ github.sha }}
@@ -117,6 +120,25 @@ jobs:
           labels: ${{ steps.meta.outputs.labels }} # This injects the Source Repository link
 #          cache-from: type=gha
 #          cache-to: type=gha,mode=max
+
+      - name: Extract Primary Tag for Trivy
+        id: extract-tag
+        run: |
+          # The metadata-action returns tags separated by newlines
+          # We take the first tag from the list
+          FIRST_TAG=$(echo "${{ steps.meta.outputs.tags }}" | head -n 1)
+          echo "IMAGE_TO_SCAN=$FIRST_TAG" >> $GITHUB_ENV
+
+      - name: Run Trivy Security Scan
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: ${{ env.IMAGE_TO_SCAN }}
+          format: 'sarif'
+          output: 'trivy-results.sarif'
+          exit-code: '1' # Fails the build if high/critical vulns found
+          severity: 'CRITICAL,HIGH'
+
+
 
 
 
