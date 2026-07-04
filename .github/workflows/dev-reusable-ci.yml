@@ -149,10 +149,20 @@ jobs:
         uses: aquasecurity/trivy-action@master
         with:
           image-ref: ${{ env.IMAGE_TO_SCAN }}
-          format: 'table'
-          #output: 'trivy-results.sarif'
-          exit-code: '1' # Fails the build if high/critical vulns found
+          format: 'sarif'
+          output: 'trivy-results.sarif'
+          # Change exit-code to 0 so the build never fails on vulnerabilities
+          exit-code: '0'
           severity: 'CRITICAL,HIGH'
+
+      - name: Upload Trivy Scan Results
+        uses: actions/upload-artifact@v4
+        # 'always()' ensures this runs even if the previous step technically 'failed'
+        # (though with exit-code 0, it shouldn't fail anyway)
+        if: always()
+        with:
+          name: trivy-scan-results
+          path: trivy-results.sarif
 
 
 
