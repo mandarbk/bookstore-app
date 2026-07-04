@@ -74,7 +74,6 @@ jobs:
       contents: read
       checks: write     # <--- Required for Publishing the Test Results
       packages: write
-      pull-requests: write    # <--- Required for adding the Test Results
     steps:
       - name: Checkout Code
         uses: actions/checkout@v6

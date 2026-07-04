@@ -97,6 +97,7 @@ jobs:
       contents: read
       packages: write
       checks: write     # <--- Required for Publishing the Test Results
+      pull-requests: write
     uses: ./.github/workflows/dev-reusable-ci.yml
     with:
       service-name: ${{ matrix.service }}
