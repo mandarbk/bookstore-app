@@ -81,6 +81,20 @@ jobs:
       contents: read
       packages: write  # <--- This gives the GITHUB_TOKEN the power to push images
     steps:
+      - name: Checkout Code
+        uses: actions/checkout@v6
+
+      - name: Set up JDK 25
+        uses: actions/setup-java@v5
+        with:
+          java-version: '25'
+          distribution: 'temurin'
+          cache: 'maven'
+
+      - name: Build and Test (Reactor)
+        run: |
+          mvn clean install -pl ${{ inputs.service-name }} -am -DskipTests
+
       - name: Login to Container Registry
         uses: docker/login-action@v4
         with:
@@ -94,10 +108,10 @@ jobs:
         with:
           images: ghcr.io/${{ env.IMAGE_NAME }}
           tags: |
-            # 1. If a git tag is pushed (v1.0.0), use that as a tag
-            type=semver,pattern={{version}}
-            # 2. Always tag with the commit SHA
+            # 1. Always tag with the commit SHA
             type=sha,format=short
+            # 2. If a git tag is pushed (v1.0.0), use that as a tag
+            type=semver,pattern={{version}}
 
 #  cache-from and cache-to are the mechanisms that make your Docker builds fast and incremental instead of building everything from scratch every time.
 #  In a CI environment, every job starts on a "clean" runner. Without caching, Docker would have to re-download all your Java base images, re-install your dependencies, and re-compile your entire Spring Boot project on every single push.
