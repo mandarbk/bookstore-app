@@ -198,7 +198,7 @@ jobs:
         id: get-version
         run: |
           # This command extracts the exact version currently in the pom.xml
-          VERSION=$(mvn help:evaluate -Dexpression=project.version -q -DforceStdout -pl ${{ nputs.service-name }})
+          VERSION=$(mvn help:evaluate -Dexpression=project.version -q -DforceStdout -pl ${{ inputs.service-name }})
           echo "SERVICE_RELEASE_VERSION=$VERSION" >> $GITHUB_ENV
 
       - name: Create GitHub Release
