@@ -160,6 +160,7 @@ jobs:
 
       - name: Final CI Status
         run: |
+          TARGET_SHA="${{ github.event.pull_request.head.sha || github.sha }}"
           # Check if the build job was successful
           # ${{ needs.build.result }} will be 'success', 'failure', or 'skipped'
           if [ "${{ needs.build.result }}" == "success" ]; then
@@ -167,6 +168,6 @@ jobs:
           else
               STATE="failure"
           fi
-          gh api "repos/${{ github.repository }}/statuses/${{ github.sha }}" \
-            -f state="$STATE" -f context="CI-Pipeline-Success" \
+          gh api "repos/${{ github.repository }}/statuses/$TARGET_SHA" \
+            -f state="$STATE" -f context="Final CI Status" \
             -f description="Pipeline finished with result: ${{ needs.build.result }}"
