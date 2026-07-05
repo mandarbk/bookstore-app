@@ -18,10 +18,7 @@
         "do_not_enforce_on_create": true,
         "required_status_checks": [
           {
-            "context": "build-and-test"
-          },
-          {
-            "context": "build-and-scan-images"
+            "context": "Final CI Status"
           }
         ]
       }
