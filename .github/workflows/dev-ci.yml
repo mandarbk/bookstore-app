@@ -72,6 +72,9 @@ concurrency:
   # If enabled, this cancels the current running and starts the latest.
   cancel-in-progress: true
 
+env:
+  GH_TOKEN: ${{ github.token }}
+
 jobs:
   # This job detects WHICH services changed in a given commit
   changes:
