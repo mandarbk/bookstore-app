@@ -34,8 +34,6 @@ run-name: Pipeline run by @${{ github.actor }}
 on:
   push:
     branches: [ dev ]
-  pull_request:
-    branches: [ dev ]
   merge_group:
     types: [ checks_requested ]
   workflow_dispatch:
@@ -49,6 +47,7 @@ on:
 defaults:
   run:
     shell: bash
+    working-directory: workdir
 
 #  When it takes several minutes to complete a build and you are only interested in the latest build,
 #  you can change the workflow to group a job with a concurrency definition and set the 'cancel-in-progress' option to true.
@@ -71,9 +70,6 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.refname }}
   # If enabled, this cancels the current running and starts the latest.
   cancel-in-progress: true
-
-env:
-  GH_TOKEN: ${{ github.token }}
 
 jobs:
   # This job detects WHICH services changed in a given commit
@@ -136,14 +132,11 @@ jobs:
   report:
     needs: [ build ] # Wait for all matrix builds to finish
     runs-on: ubuntu-latest
-    env:
-      GH_TOKEN: ${{ github.token }}
     if: always() # Ensure this runs even if the builds failed
     permissions:
       contents: read
       checks: write
       pull-requests: write
-      statuses: write
     steps:
       - name: Download all test results
         uses: actions/download-artifact@v4
@@ -157,17 +150,3 @@ jobs:
           files: "all-test-results/**/*.xml"
           check_name: "Aggregate Test Results"
           comment_mode: failures
-
-      - name: Final CI Status
-        run: |
-          TARGET_SHA="${{ github.event.pull_request.head.sha || github.sha }}"
-          # Check if the build job was successful
-          # ${{ needs.build.result }} will be 'success', 'failure', or 'skipped'
-          if [ "${{ needs.build.result }}" == "success" ]; then
-              STATE="success"
-          else
-              STATE="failure"
-          fi
-          gh api "repos/${{ github.repository }}/statuses/$TARGET_SHA" \
-            -f state="$STATE" -f context="Final CI Status" \
-            -f description="Pipeline finished with result: ${{ needs.build.result }}"
