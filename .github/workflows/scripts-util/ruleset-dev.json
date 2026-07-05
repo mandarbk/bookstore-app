@@ -1,5 +1,5 @@
 {
-  "name": "Dev Branch Ruleset",
+  "name": "Dev Branch Ruleset v2",
   "target": "branch",
   "enforcement": "active",
   "conditions": {
@@ -18,7 +18,7 @@
         "do_not_enforce_on_create": true,
         "required_status_checks": [
           {
-            "context": "build_and_test"
+            "context": "build-and-test"
           },
           {
             "context": "build-and-scan-images"
