@@ -152,3 +152,16 @@ jobs:
           files: "all-test-results/**/*.xml"
           check_name: "Aggregate Test Results"
           comment_mode: failures
+
+      - name: Final CI Status
+        run: |
+          # Check if the build job was successful
+          # ${{ needs.build.result }} will be 'success', 'failure', or 'skipped'
+          if [ "${{ needs.build.result }}" == "success" ]; then
+              STATE="success"
+          else
+              STATE="failure"
+          fi
+          gh api "repos/${{ github.repository }}/statuses/${{ github.sha }}" \
+            -f state="$STATE" -f context="CI-Pipeline-Success" \
+            -f description="Pipeline finished with result: ${{ needs.build.result }}"
