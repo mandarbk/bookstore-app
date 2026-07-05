@@ -1,0 +1,16 @@
+# I plan to use Github Deployments to move dev code to Staging and QA ... and only after QA deployment approval
+# promote dev to main
+name: Promote to Main
+on:
+  deployment_status:
+    state: [success] # Triggered when the deployment to QA is marked as 'success'
+
+jobs:
+  promote:
+    if: github.event.deployment.environment == 'QA'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger Merge to Main
+        run: |
+          # This assumes you have a script or gh command to merge
+          gh pr create --title "Promote Dev to Main" --base main --head dev --body "QA Approved. Promoting dev to main."

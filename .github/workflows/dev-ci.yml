@@ -34,6 +34,8 @@ run-name: Pipeline run by @${{ github.actor }}
 on:
   push:
     branches: [ dev ]
+  merge_group:
+    types: [ checks_requested ]
   workflow_dispatch:
     inputs:
       force-build-all:
@@ -46,6 +48,28 @@ defaults:
   run:
     shell: bash
     working-directory: workdir
+
+#  When it takes several minutes to complete a build and you are only interested in the latest build,
+#  you can change the workflow to group a job with a concurrency definition and set the 'cancel-in-progress' option to true.
+#  This will #result in the build being canceled, and a new build with newer content will be started.
+#  This prevents unnecessary uses of resources, since the previous build will not produce useful outcomes,
+#  and it can save on costs when running on the hosted runners.
+
+#  Using concurrency groups is not a solution for team members to push too frequently to the central repository.
+#  Please work with your team, and ensure they understand the best way of working is to commit often to your local branch,
+#  but only push the changes when your work is done or ready for review.
+#  Pushing every single change is an anti-pattern in the way of working with Git.
+#  In this example, we defined the group with a unique name for this workflow per branch triggering the workflow.
+#
+#  Note that when you set the cancel-in-progress option to false (which is the default), the only result will be
+#  that you enforce all builds to run sequentially, which will not lead to any reduction of costs.
+#  Sometimes, however, this can be useful—for exam#ple, when the workflow is accessing a resource that multiple running workflows
+#  cannot access at the same moment. This is more common in CD scenarios.
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.refname }}
+  # If enabled, this cancels the current running and starts the latest.
+  cancel-in-progress: true
 
 jobs:
   # This job detects WHICH services changed in a given commit

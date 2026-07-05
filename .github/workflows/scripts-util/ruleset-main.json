@@ -1,0 +1,44 @@
+// Comments :
+//"type": "required_linear_history" ---> Forces rebase-based merging or squash.
+//"type": "deletion" --> Prevents the branch from being deleted.
+//"type" : non_fast_forward --> Prevents force pushes (enforces fast-forward only).
+//admin_enforcement --> Applies these rules to repository admins as well.
+//restrictions: null	N/A	In Rulesets, if you do not include a required_signatures or code_scanning rule, these are essentially null/disabled by default.
+
+{
+  "name": "Main Branch Ruleset",
+  "target": "branch",
+  "enforcement": "active",
+  "conditions": {
+    "ref_name": {
+      "include": [
+        "refs/heads/main"
+      ],
+      "exclude": []
+    }
+  },
+  "rules": [
+    {
+      "type": "pull_request",
+      "parameters": {
+        "required_approving_review_count": 1,
+        "dismiss_stale_reviews_on_push": true,
+        "require_code_owner_reviews": false
+      }
+    },
+    { "type": "required_linear_history" },
+    { "type": "non_fast_forward" },
+    { "type": "deletion" },
+    {
+      "type": "required_status_checks",
+      "parameters": {
+        "strict_required_status_checks_policy": true,
+        "required_status_checks": [
+          {
+            "context": ["build-and-test", "build-and-scan-images"]
+          }
+        ]
+      }
+    }
+  ]
+}

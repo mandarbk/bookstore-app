@@ -49,6 +49,7 @@ jobs:
           name: test-results-${{ inputs.service-name }}
           path: "**/target/*-reports/*.xml"
           if-no-files-found: ignore
+          retention-days: 1
 
       ################### Disabling Integration TESTS  FOR NOW .......!!!!!
       #      # Use 'verify' instead of 'test' to trigger the Failsafe plugin
