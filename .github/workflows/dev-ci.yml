@@ -146,16 +146,15 @@ jobs:
       pull-requests: write
       statuses: write
     steps:
-      - name: Download all test results
+      - name: Download all artifacts
         uses: actions/download-artifact@v4
         with:
-          pattern: test-results-*
-          path: all-test-results
+          path: all-artifacts
 
       - name: Publish Consolidated Test Results
         uses: EnricoMi/publish-unit-test-result-action@v2
         with:
-          files: "all-test-results/**/*.xml"
+          files: "all-artifacts/test-results-*/**/*.xml"
           check_name: "Aggregate Test Results"
           comment_mode: failures
 
@@ -172,3 +171,8 @@ jobs:
           gh api "repos/${{ github.repository }}/statuses/$TARGET_SHA" \
             -f state="$STATE" -f context="Final CI Status" \
             -f description="Pipeline finished with result: ${{ needs.build.result }}"
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: all-artifacts/manifest-*/*.yml

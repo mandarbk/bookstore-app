@@ -51,6 +51,8 @@ jobs:
           if-no-files-found: ignore
           retention-days: 1
 
+
+
       ################### Disabling Integration TESTS  FOR NOW .......!!!!!
       #      # Use 'verify' instead of 'test' to trigger the Failsafe plugin
       #      - name: Build and Run All Tests
@@ -67,10 +69,33 @@ jobs:
       #            **/target/surefire-reports/TEST-*.xml
       #            **/target/failsafe-reports/TEST-*.xml
 
+#  sonar-scan-pr:
+#    name: SonarQube PR Analysis
+#    runs-on: ubuntu-latest
+#    if: github.event_name == 'pull_request'
+#    steps:
+#      - name: Checkout Code
+#        uses: actions/checkout@v6
+#        with:
+#          fetch-depth: 0  # Required for SonarQube to calculate history correctly
+#
+#      - name: SonarQube Scan
+#        uses: SonarSource/sonarqube-scan-action@v5
+#        with:
+#          args: |
+#            -Dsonar.projectKey=${{ inputs.service-name }}
+#            -Dsonar.pullrequest.key=${{ github.event.pull_request.number }}
+#            -Dsonar.pullrequest.branch=${{ github.head_ref }}
+#            -Dsonar.pullrequest.base=${{ github.base_ref }}
+#        env:
+#          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+#          SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }} # Your on-prem URL
+
   build-and-scan-images:
     name: Deploy Artifacts
     needs: build-and-test
     runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/dev' || github.ref == 'refs/heads/main'
     permissions:
       contents: read
       checks: write     # <--- Required for Publishing the Test Results
@@ -172,6 +197,19 @@ jobs:
         if: always() # Ensures it runs even if the scan found vulnerabilities
         with:
           sarif_file: 'trivy-results.sarif'
+
+      - name: Update Kubernetes Manifest
+        run: |
+          # Use yq (pre-installed on Ubuntu runners) to update the image tag
+          # Assumes your YAML has a spec.template.spec.containers[0].image field
+          # Adjust the path 'spec.template.spec.containers[0].image' to match your actual YAML structure
+          yq e -i '.spec.template.spec.containers[0].image = "ghcr.io/${{ env.IMAGE_NAME }}:${{ github.sha }}"' ${{ inputs.context-path }}/src/main/resources/k8s/deployment.yml
+
+      - name: Upload Updated Manifest
+        uses: actions/upload-artifact@v4
+        with:
+          name: manifest-${{ inputs.service-name }}
+          path: ${{ inputs.context-path }}/src/main/resources/k8s/*.yml
 
 
 
