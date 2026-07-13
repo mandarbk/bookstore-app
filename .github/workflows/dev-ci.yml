@@ -161,6 +161,7 @@ jobs:
       - name: Final CI Status
         run: |
           TARGET_SHA="${{ github.event.pull_request.head.sha || github.sha }}"
+          echo "Targeting Commit SHA ${TARGET_SHA}"
           # Check if the build job was successful
           # ${{ needs.build.result }} will be 'success', 'failure', or 'skipped'
           if [ "${{ needs.build.result }}" == "success" ]; then
@@ -176,3 +177,35 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           files: all-artifacts/manifest-*/*.yml
+
+      - name: Checkout Deployments Branch
+        uses: actions/checkout@v4
+        with:
+          ref: 'kubernetes-deployments' # Your dedicated environment branch
+          path: 'gitops-modules'     # Clone it into a subfolder
+
+      # 4. Copy new manifests into the designated path and commit
+      - name: Commit and Push to GitOps Branch
+        run: |
+          # Define your specific path structure inside the deployment branch
+          TARGET_PATH="gitops-modules/apps/bookstore-app"
+          mkdir -p $TARGET_PATH
+          
+          # Clean out old manifests to ensure deleted resources are tracked correctly
+          rm -rf $TARGET_PATH/*
+          cp -r all-artifacts/manifest-*/*.yml $TARGET_PATH/
+          
+          cd gitops-modules
+          
+          # Setup Git config for the runner
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          
+          # Check if there are actually changes to avoid empty commit errors
+          if [ -n "$(git status --porcelain)" ]; then
+            git add .
+            git commit -m "chore(deploy): promote release ${{ github.event.release.tag_name }} to kubernetes-deployments"
+            git push origin kubernetes-deployments
+          else
+            echo "No changes detected in manifests for this release."
+          fi
