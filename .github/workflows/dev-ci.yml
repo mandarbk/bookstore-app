@@ -172,11 +172,11 @@ jobs:
           gh api "repos/${{ github.repository }}/statuses/$TARGET_SHA" \
             -f state="$STATE" -f context="Final CI Status" \
             -f description="Pipeline finished with result: ${{ needs.build.result }}"
-
-      - name: Create GitHub Release
-        uses: softprops/action-gh-release@v2
-        with:
-          files: all-artifacts/manifest-*/*.yml
+#
+#      - name: Create GitHub Release
+#        uses: softprops/action-gh-release@v2
+#        with:
+#          files: all-artifacts/manifest-*/*.yml
 
       - name: Checkout Deployments Branch
         uses: actions/checkout@v4
