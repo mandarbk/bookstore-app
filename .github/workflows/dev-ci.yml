@@ -178,12 +178,6 @@ jobs:
 #        with:
 #          files: all-artifacts/manifest-*/*.yml
 
-      - name: Checkout Deployments Branch
-        uses: actions/checkout@v4
-        with:
-          ref: 'kubernetes-deployments' # Your dedicated environment branch
-          path: 'gitops-modules'     # Clone it into a subfolder
-
       # 4. Copy new manifests into the designated path and commit
       - name: Commit and Push to GitOps Branch
         run: |
@@ -203,6 +197,7 @@ jobs:
           
           # Check if there are actually changes to avoid empty commit errors
           if [ -n "$(git status --porcelain)" ]; then
+            git checkout -b kubernetes-deployments
             git add .
             git commit -m "chore(deploy): promote release ${{ github.event.release.tag_name }} to kubernetes-deployments"
             git push origin -u kubernetes-deployments
