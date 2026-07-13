@@ -205,7 +205,7 @@ jobs:
           if [ -n "$(git status --porcelain)" ]; then
             git add .
             git commit -m "chore(deploy): promote release ${{ github.event.release.tag_name }} to kubernetes-deployments"
-            git push origin -U kubernetes-deployments
+            git push origin -u kubernetes-deployments
           else
             echo "No changes detected in manifests for this release."
           fi
